@@ -1,0 +1,1 @@
+"""NeuroSeq desktop graphical interface."""
