@@ -1,0 +1,13 @@
+# NeuroSeq scientific runtime dependencies.
+# Install with: python -m pip install -r requirements.txt
+# Versions are deliberately not pinned: the supplied source did not include
+# a validated, cross-platform dependency lockfile. For exact reproducibility,
+# archive `python -m pip freeze` from the environment used for reviewer runs.
+numpy
+pandas
+scipy
+scikit-learn
+networkx
+python-louvain
+matplotlib
+Pillow
