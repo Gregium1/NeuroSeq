@@ -12,10 +12,6 @@
 
 **Important:** A progress stage such as “Prepare spike data” describes the display state, not a separate execution. The GUI worker invokes the same `run_pipeline()` as the command-line launcher. Do not launch a second run while one is already in progress.
 
-### Suggested screenshots to capture for GitHub
-
-After a successful run, capture the input/output selections, the `T=0.5` control, the live gamma-sweep console, the completed metrics, and the actual output directory. Place these screenshots in `Tutorial/Images/` and link them here. **No screenshots are included until a real run is captured.**
-
 [Next: Understanding Micro](03_Understanding_Micro.md).
 
 

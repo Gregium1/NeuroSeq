@@ -29,8 +29,4 @@ To compare execution paths, use identical input data, `T`, duration, gamma sweep
 - Slow gamma sweep: 81 gamma values and three Louvain seeds are evaluated by default; wait for the completion message and inspect the console.
 - `tight_layout()` warning: a Matplotlib layout warning may appear; inspect the exported figure, but it is not evidence that state discovery failed.
 
-## Release quality
-
-This bundled example is generated from a documented synthetic process, but no reference output files are claimed here because an end-to-end run has not been completed in this packaging environment. Before publishing to reviewers, run the example and archive its genuine results; optionally add screenshots captured from that run to `Tutorial/Images/`.
-
 [Return to tutorial home](README.md).

@@ -61,8 +61,7 @@ Likewise, if `state_vectors.csv` contains many Proto-states while the final labe
 
 ## What NeuroSeq does *not* infer automatically
 
-NeuroSeq does not establish stimulus selectivity, anatomical connectivity, causal mechanisms, or ground-truth accuracy from the output files alone. Such claims require independent experimental metadata or validation analyses. The tutorial example's known generator sequence can be used for a separate comparison, but is not an input to state discovery.
-
+NeuroSeq does not establish stimulus selectivity, anatomical connectivity, causal mechanisms, or ground-truth accuracy from the output files alone. Such claims require independent experimental metadata or validation analyses. 
 [Next: Reproducibility](06_Reproducibility.md).
 
 
@@ -86,6 +85,4 @@ Open `metastate_states_labels_merged.png` for the state-labeled spike raster. Th
 
 The screenshot shows a particular run with 109 Proto-states and 10 Metastable States. A Proto-state is a time interval constructed from consensus boundaries; a Metastable State groups related Proto-states. **109 is not the number of neurons**, and neither count is fixed by the GUI. Results will vary with the recording and analysis parameters.
 
-### Screenshots versus reproducible example
 
-The screenshots supplied for this guide are from an actual GUI run. They are illustrative and **must not be mistaken for the expected output of `Tutorial/Example_Data/`**. To create an exact reproducibility reference, run that example separately and archive its `run_summary.json`, consensus-boundary CSVs, and final label CSVs.

@@ -46,5 +46,3 @@ In this screenshot, ten distinct letters (A–J) appear. These should not be int
 ![Meso output files visible in the GUI browser](Images/gui_meso_output_metastate.png)
 
 For this visualization, the GUI output browser shows `metastate_states_labels_merged.png` and `.svg`, alongside `metastate_states_labels.csv` and a barcode SVG. Prefer the saved PNG or SVG file for figures in papers; use the CSV when quantitative time boundaries and labels are required.
-
-*This screenshot is a real demonstration run and is not a claim about the bundled example's expected clustering.*

@@ -36,4 +36,3 @@ The **horizontal axis** is the Micro Louvain resolution parameter γ; the **vert
 
 The output browser includes `critical_point_persistence_map.csv` (underlying numerical results), `critical_point_persistence_map.png` (the visualization), and consensus critical-point CSV files. The exact temporal consensus boundaries should be read from the saved CSV outputs rather than estimated visually from this map.
 
-*The screenshots correspond to a user-provided demonstration run, not necessarily the bundled synthetic example.*
