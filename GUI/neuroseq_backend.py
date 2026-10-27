@@ -326,47 +326,65 @@ class NeuroSeqBackend:
         else: subprocess.Popen(["xdg-open",str(t)])
     def open_output_folder(self,path): self.open_path(path)
     def _monitor(self):
-        terminal=False
+        """Consume every worker event and always report a terminal outcome.
+
+        A process can exit before its multiprocessing queue feeder has delivered
+        the final event. Keep draining the queue briefly after process exit.
+        """
+        terminal = False
+        exited_at = None
         try:
-            while True:
-                try: kind,payload=self._queue.get(timeout=.15)
-                except queue.Empty: kind=None; payload=None
-                if kind=="started":
-                    self.on_message(f"NeuroSeq worker process started (PID {payload}).")
-                elif kind=="message":
-                    self._detect(str(payload)); self.on_message(str(payload))
-                elif kind=="progress": s,f,m=payload; self._set_stage(s,m)
-                elif kind=="finished": terminal=True; self._set_stage("complete"); self.on_finished(payload); break
-                elif kind=="error": terminal=True; self.on_error(*payload); break
-                if self._process is not None and not self._process.is_alive():
-                    self._process.join(timeout=.2)
-                    # Queue feeder may still be delivering the final result.
-                    if not terminal:
-                        try:
-                            kind2, payload2 = self._queue.get(timeout=2.0)
-                            if kind2 == "finished":
-                                terminal = True
-                                self._set_stage("complete")
-                                self.on_finished(payload2)
-                            elif kind2 == "error":
-                                terminal = True
-                                self.on_error(*payload2)
-                            elif kind2 == "message":
-                                self.on_message(str(payload2))
-                        except queue.Empty:
-                            pass
-                    if not terminal:
-                        if self._cancel: self.on_cancelled()
-                        elif self._process.exitcode not in (0,None):
-                            self.on_error(
-                                f"NeuroSeq process exited with code {self._process.exitcode}.",
-                                "The worker process ended before it could report a Python exception.\n"
-                                "This is usually a Windows multiprocessing startup problem.\n"
-                                "The updated GUI uses an import-light GUI/__init__.py and a non-daemon worker.",
-                            )
+            while not terminal:
+                try:
+                    kind, payload = self._queue.get(timeout=0.15)
+                except queue.Empty:
+                    kind, payload = None, None
+                except (EOFError, OSError, ValueError) as exc:
+                    self.on_error("NeuroSeq communication failed.", repr(exc))
+                    terminal = True
                     break
+
+                if kind == "started":
+                    self.on_message(f"NeuroSeq worker process started (PID {payload}).")
+                elif kind == "message":
+                    self._detect(str(payload))
+                    self.on_message(str(payload))
+                elif kind == "progress":
+                    stage, fraction, message = payload
+                    self._set_stage(stage, message)
+                elif kind == "finished":
+                    self._set_stage("complete")
+                    self.on_finished(payload)
+                    terminal = True
+                elif kind == "error":
+                    self.on_error(*payload)
+                    terminal = True
+
+                if terminal:
+                    break
+                if self._process is not None and not self._process.is_alive():
+                    if exited_at is None:
+                        exited_at = time.monotonic()
+                        self._process.join(timeout=0.1)
+                    # Do not stop at the first pending ordinary message.
+                    # Give the queue feeder time to deliver the terminal event.
+                    if time.monotonic() - exited_at >= 3.0:
+                        if self._cancel:
+                            self.on_cancelled()
+                        else:
+                            code = self._process.exitcode
+                            self.on_error(
+                                "NeuroSeq ended without a completion report.",
+                                f"Worker exit code: {code}. The final 'finished' or "
+                                "'error' message was not received. Check the live "
+                                "console and run_summary.json/runtime.csv for details."
+                            )
+                        terminal = True
+        except Exception as exc:
+            self.on_error("NeuroSeq monitor failed.", traceback.format_exc())
         finally:
-            with self._lock: self._running=False
+            with self._lock:
+                self._running = False
     def _set_stage(self,key,message=None):
         for i,(k,d,f) in enumerate(self.STAGES):
             if k==key:

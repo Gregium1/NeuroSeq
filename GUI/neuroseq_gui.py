@@ -13,6 +13,7 @@ Gregium Theory
 from __future__ import annotations
 
 import json
+import queue
 import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
@@ -52,18 +53,40 @@ class NeuroSeqGUI(tk.Tk):
         self._build_style()
         self._build_layout()
 
+        # The backend monitor runs on a Python thread. Never call Tk from it.
+        # Tk's main thread polls this thread-safe queue on every platform.
+        self._ui_events = queue.Queue()
         self.backend = NeuroSeqBackend(
-            on_message=lambda message: self.after(0, self._append_console, message),
-            on_progress=lambda stage, fraction, message: self.after(
-                0, self._update_progress, stage, fraction, message
+            on_message=lambda message: self._ui_events.put(("message", (message,))),
+            on_progress=lambda stage, fraction, message: self._ui_events.put(
+                ("progress", (stage, fraction, message))
             ),
-            on_finished=lambda result: self.after(0, self._run_finished, result),
-            on_error=lambda message, details: self.after(0, self._run_error, message, details),
-            on_cancelled=lambda: self.after(0, self._run_cancelled),
+            on_finished=lambda result: self._ui_events.put(("finished", (result,))),
+            on_error=lambda message, details: self._ui_events.put(("error", (message, details))),
+            on_cancelled=lambda: self._ui_events.put(("cancelled", ())),
         )
+        self.after(50, self._poll_ui_events)
 
         self._set_idle_state()
         self._apply_theme()
+
+    def _poll_ui_events(self) -> None:
+        """Apply worker notifications only on the Tkinter main thread."""
+        handlers = {
+            "message": self._append_console,
+            "progress": self._update_progress,
+            "finished": self._run_finished,
+            "error": self._run_error,
+            "cancelled": self._run_cancelled,
+        }
+        # Limit work per tick so a large log does not freeze the interface.
+        for _ in range(200):
+            try:
+                kind, args = self._ui_events.get_nowait()
+            except queue.Empty:
+                break
+            handlers[kind](*args)
+        self.after(50, self._poll_ui_events)
 
     def _create_variables(self) -> None:
         d = DEFAULTS
