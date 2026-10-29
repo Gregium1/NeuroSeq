@@ -8,7 +8,7 @@ Meso.meso_proto_windows
 
 Purpose
 -------
-Construct the final consensus Micro state windows and perform Louvain
+Construct the final consensus Proto-state windows and perform Louvain
 community detection independently within each state.
 
 Following the automatic gamma sweep, NeuroSeq identifies consensus temporal

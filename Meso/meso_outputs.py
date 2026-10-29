@@ -15,7 +15,7 @@ NeuroSeq Meso pipeline.
 
 Scientific Role
 ---------------
-After spectral clustering assigns each Micro state to a Meso family, this
+After spectral clustering assigns each Proto-state to a Meso family, this
 module converts those assignments into temporally organized output tables.
 It reconstructs the family sequence across the recording, merges adjacent
 intervals belonging to the same family, and generates family-labeled timeline
@@ -563,11 +563,11 @@ def _rows_from_state_labels(*, state_vectors, state_ids, label_lookup) -> pd.Dat
     Parameters
     ----------
     state_vectors
-        Mapping from each Micro-state identifier to its temporal metadata.
+        Mapping from each Proto-state identifier to its temporal metadata.
     state_ids
-        Ordered Micro-state identifiers included in the Meso analysis.
+        Ordered Proto-state identifiers included in the Meso analysis.
     label_lookup
-        Mapping from Micro-state identifiers to canonical family labels.
+        Mapping from Proto-state identifiers to canonical family labels.
 
     Returns
     -------
@@ -583,7 +583,7 @@ def _rows_from_state_labels(*, state_vectors, state_ids, label_lookup) -> pd.Dat
 
     rows = []
 
-    # Build one temporally valid family record for every analyzed Micro state.
+    # Build one temporally valid family record for every analyzed Proto-state.
     for uid in state_ids:
         info = state_vectors[uid]
         start = float(info.get("start", np.nan)); end = float(info.get("end", np.nan)); duration = float(info.get("duration", np.nan))
@@ -608,9 +608,9 @@ def materialize_family_outputs(*, out_dir: str, state_vectors, state_ids, family
     out_dir : str
         Destination directory for all family-level outputs.
     state_vectors
-        Mapping containing temporal metadata for each Micro state.
+        Mapping containing temporal metadata for each Proto-state.
     state_ids
-        Ordered Micro-state identifiers included in the Meso analysis.
+        Ordered Proto-state identifiers included in the Meso analysis.
     family_label_csv : str
         Path to the canonical spectral family-label table containing
         ``Unique_ID`` and ``Component_Label`` columns.
@@ -628,7 +628,7 @@ def materialize_family_outputs(*, out_dir: str, state_vectors, state_ids, family
     Scientific Role
     ---------------
     This function is the final family-output materialization step of the Meso
-    pipeline. It joins spectral family assignments with Micro-state timing,
+    pipeline. It joins spectral family assignments with Proto-state timing,
     consolidates consecutive family intervals, and exports the tables and
     figures used for interpretation and publication.
     """
@@ -673,7 +673,16 @@ def materialize_family_outputs(*, out_dir: str, state_vectors, state_ids, family
         # Additional 60-second views are visualizations of the SAME global
         # assignments. No clustering or state discovery is repeated.
         segments = []
-        if not merged.empty:
+        # A previous long run may have left segment files in this destination.
+        # Clear only the generated 60-second rasters, never other outputs.
+        previous_segment_dir = out_dir / "Raster_60s"
+        if previous_segment_dir.is_dir():
+            for old_segment in previous_segment_dir.iterdir():
+                if old_segment.is_file() and re.fullmatch(r"raster_with_states_\d+\.(?:png|svg)", old_segment.name):
+                    old_segment.unlink()
+            if not any(previous_segment_dir.iterdir()):
+                previous_segment_dir.rmdir()
+        if not merged.empty and float(merged["End"].max()) - float(merged["Start"].min()) > 60.0 + 1e-9:
             begin = float(merged["Start"].min())
             finish = float(merged["End"].max())
             segment_dir = ensure_dir(out_dir / "Raster_60s")

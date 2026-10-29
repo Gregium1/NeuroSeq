@@ -12,12 +12,12 @@ Meso.meso_score
 
 Purpose
 -------
-Construct the pairwise Meso similarity score from Micro-state firing-rate
+Construct the pairwise Meso similarity score from Proto-state firing-rate
 distance and normalized mutual information measurements.
 
 Scientific Role
 ---------------
-The Meso analysis combines two complementary descriptions of Micro-state
+The Meso analysis combines two complementary descriptions of Proto-state
 similarity. Firing-rate distance measures differences in population activity,
 whereas normalized mutual information measures similarity between neuronal
 community assignments. Each measurement is transformed through a Gaussian
@@ -62,7 +62,7 @@ def compute_s_scores(pairs: pd.DataFrame, *, n_states: int) -> Tuple[pd.DataFram
     pairs : pandas.DataFrame
         Pairwise state table containing ``Dist`` and ``NMI`` columns.
     n_states : int
-        Number of Micro states. Retained as part of the function interface.
+        Number of Proto-states. Retained as part of the function interface.
 
     Returns
     -------

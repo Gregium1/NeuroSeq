@@ -11,7 +11,7 @@ Mesoo.meso_proto_nmi
 Purpose
 -------
 Compute pairwise Normalized Mutual Information (NMI) between the neuronal
-Louvain community assignments of every pair of final Micro states.
+Louvain community assignments of every pair of final Proto-states.
 
 Following construction of the consensus Proto-States and within-state Louvain
 community detection, this module quantifies the similarity of neuronal
@@ -22,7 +22,7 @@ NeuroSeq Meso analysis.
 
 Scientific Role
 ---------------
-Each final Micro state is characterized by a Louvain partition assigning every
+Each final Proto-state is characterized by a Louvain partition assigning every
 recorded neuron to a neuronal community.
 
 For every pair of states,
@@ -49,7 +49,7 @@ This module produces two canonical files:
 
 ``proto_state_louvain_nmi.csv``
     Square symmetric matrix whose rows and columns correspond to the final
-    Micro states.
+    Proto-states.
 
 ``proto_state_louvain_nmi_long.csv``
     Long-form table containing every pairwise state comparison together with
@@ -105,10 +105,10 @@ def run_state_pair_nmi(
     base_dir: str,
 ) -> dict[str, str]:
     """
-    Compute pairwise Louvain NMI between all final Micro states.
+    Compute pairwise Louvain NMI between all final Proto-states.
 
     This function compares the neuronal Louvain partitions associated with
-    every pair of consensus Micro states. The resulting similarities are
+    every pair of consensus Proto-states. The resulting similarities are
     written in both square-matrix and long-form representations.
 
     Parameters

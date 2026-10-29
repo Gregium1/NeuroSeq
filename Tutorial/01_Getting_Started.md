@@ -2,7 +2,7 @@
 
 ## What NeuroSeq does
 
-NeuroSeq analyzes spike timestamps from all `SU_*.csv` files in a recording folder. **Micro** detects consensus critical points in evolving neuronal functional networks. **Meso** uses these boundaries to construct Proto-states and group related Proto-states into recurring **Metastable States**. Stimulus and ground-truth labels are not used during inference.
+NeuroSeq analyzes spike timestamps from all `SU_*.csv` files in a recording folder. **Micro** detects consensus critical points in evolving neuronal functional networks. **Meso** uses these boundaries to construct Proto-states and group related Proto-states into recurring **Metastable States**.
 
 ## Install and launch
 
@@ -25,6 +25,6 @@ On macOS or Linux, use `python3 -m venv .venv` and `source .venv/bin/activate` f
 
 Select `Tutorial/Example_Data/` as the **Recording folder**. Select a separate, writable **Output folder** (for example `NeuroSeq_Example_Results/`); the application creates `NeuroSeq/` inside it. Do not select the recording folder as the output destination.
 
-**Recording duration:** The GUI accepts a start time and requested duration. If the requested endpoint exceeds the latest observed spike timestamp, the analysis duration is capped to that timestamp. This is a practical fallback, **not a measurement of the true acquisition endpoint**: a silent tail after the last spike cannot be inferred from spike timestamps alone. A shorter requested interval is honored.
+**Recording duration:** The GUI accepts a start time and requested duration. If the requested endpoint exceeds the latest observed spike timestamp, the analysis duration is capped to that timestamp. This is a practical fallback, **not a measurement of the true acquisition endpoint**
 
 [Next: GUI walkthrough](02_GUI_Walkthrough.md).

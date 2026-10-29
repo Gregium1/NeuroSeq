@@ -14,13 +14,13 @@ Meso.meso_workflow
 Purpose
 -------
 Coordinate the complete first-stage NeuroSeq Meso workflow from collected
-Micro-state outputs through spectral family discovery and canonical result
+Proto-state outputs through spectral family discovery and canonical result
 generation.
 
 Scientific Role
 ---------------
 This module serves as the central orchestrator for Meso-level analysis. It
-collects Micro-state firing-rate vectors and Louvain community assignments,
+collects Proto-state firing-rate vectors and Louvain community assignments,
 computes pairwise structural and activity-based relationships, constructs the
 Meso similarity matrix, evaluates candidate family counts, and performs
 spectral clustering.
@@ -114,7 +114,7 @@ def run_meso_workflow(cfg=None, **kwargs):
     state_vectors, state_clusters = collect_proto_states(base_dir)
     state_ids = list(state_vectors)
 
-    # Return a diagnostic result when no Micro states are available.
+    # Return a diagnostic result when no Proto-states are available.
     if not state_ids: return {"threshold_mode":"no_states","reason":"No micro-states detected.","n_states":0,"root_sequence_folder":str(root)}
 
     # Materialize the deterministic single-family fallback for one state.
@@ -180,7 +180,7 @@ def run_meso_workflow(cfg=None, **kwargs):
     # Reorder integer labels according to first temporal appearance.
     labels=compress_labels_temporal_order(raw.copy())
 
-    # Build and save the canonical Micro-state-to-family mapping.
+    # Build and save the canonical Proto-state-to-family mapping.
     family=labels_to_family_df(state_ids,labels,raw)
     family_csv=out/"spectral_state_labels.csv"; family.to_csv(family_csv,index=False)
 

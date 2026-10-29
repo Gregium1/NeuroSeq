@@ -15,7 +15,7 @@ states for use in the Meso-level affinity analysis.
 
 Scientific Role
 ---------------
-Each Micro state is characterized by two complementary representations: a
+Each Proto-state is characterized by two complementary representations: a
 community assignment describing its neuronal organization and a firing-rate
 vector describing its population activity. This module compares every valid
 pair of states using normalized mutual information to quantify similarity
@@ -28,7 +28,7 @@ higher-order families of related neural states.
 
 Outputs
 -------
-This module returns the ordered Micro-state identifiers and a canonical
+This module returns the ordered Proto-state identifiers and a canonical
 pairwise table containing the state indices, normalized mutual information,
 and aligned firing-rate distance for every valid state pair.
 
@@ -53,11 +53,11 @@ def _aligned_rms_distance(values_1, neurons_1, values_2, neurons_2) -> float:
     Parameters
     ----------
     values_1 : array-like
-        Firing-rate values for the first Micro state.
+        Firing-rate values for the first Proto-state.
     neurons_1 : array-like
         Neuron identifiers corresponding to ``values_1``.
     values_2 : array-like
-        Firing-rate values for the second Micro state.
+        Firing-rate values for the second Proto-state.
     neurons_2 : array-like
         Neuron identifiers corresponding to ``values_2``.
 
@@ -79,7 +79,7 @@ def _aligned_rms_distance(values_1, neurons_1, values_2, neurons_2) -> float:
     map_1 = dict(zip(map(str, neurons_1), np.asarray(values_1, dtype=float)))
     map_2 = dict(zip(map(str, neurons_2), np.asarray(values_2, dtype=float)))
 
-    # Restrict the comparison to neurons represented in both Micro states.
+    # Restrict the comparison to neurons represented in both Proto-states.
     shared = sorted(set(map_1).intersection(map_2))
     if not shared:
         return float("nan")
@@ -107,16 +107,16 @@ def compute_state_pairs(
     Parameters
     ----------
     state_vectors : dict[str, dict[str, Any]]
-        Mapping from each Micro-state identifier to its firing-rate vector,
+        Mapping from each Proto-state identifier to its firing-rate vector,
         neuron identifiers, and associated state metadata.
     state_clusters : dict[str, dict[str, Any]]
-        Mapping from each Micro-state identifier to its neuron identifiers and
+        Mapping from each Proto-state identifier to its neuron identifiers and
         Louvain community assignments.
 
     Returns
     -------
     tuple[list[str], pandas.DataFrame]
-        Ordered Micro-state identifiers and a pairwise table with columns
+        Ordered Proto-state identifiers and a pairwise table with columns
         ``i``, ``j``, ``NMI``, and ``Dist``.
 
     Notes
@@ -130,11 +130,11 @@ def compute_state_pairs(
     undefined firing-rate distance are also excluded from the final table.
     """
 
-    # Preserve the canonical ordering of Micro states from the vector mapping.
+    # Preserve the canonical ordering of Proto-states from the vector mapping.
     state_ids = list(state_vectors)
     rows = []
 
-    # Compare every unique unordered pair of Micro states.
+    # Compare every unique unordered pair of Proto-states.
     for i, sid1 in enumerate(state_ids):
         c1 = state_clusters[sid1]
 

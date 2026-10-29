@@ -24,7 +24,7 @@ Enter **Start time (s)** and **Duration (s)**. For the bundled example, use `0` 
 
 ## Step 4 — Configure core parameters
 
-Expand **Core parameters** to see **Micro-Epoch T (s)**, **Gamma minimum**, **Gamma maximum**, and **Gamma step**. For the example, keep `T = 0.5`, gamma minimum `1.07`, maximum `1.15`, and step `0.001`. A 60-second interval at `T=0.5` has 120 Micro-Epochs. Changing these settings can change the inferred boundaries and labels; they are not merely display options. Other algorithm settings, including random seeds, remain configured in code.
+Expand **Core parameters** to see **Micro-Epoch T (s)**, **Gamma minimum**, **Gamma maximum**, and **Gamma step**. Keep gamma minimum `1.07`, maximum `1.15`, and step `0.001` as default values. A 60-second interval at `T=0.5` has 120 Micro-Epochs. Changing these settings can change the inferred boundaries and labels; they are not merely display options. Other algorithm settings, including random seeds, remain configured in code.
 
 ![Expanded core parameters](Images/gui_parameters.png)
 
@@ -32,7 +32,7 @@ Expand **Core parameters** to see **Micro-Epoch T (s)**, **Gamma minimum**, **Ga
 
 ## Step 5 — Run and follow progress
 
-Click **Run NeuroSeq** once. The **Run progress** panel shows input validation, spike preparation, Micro-Epoch networks, gamma sweep, critical points, Proto-state construction, Proto-state similarities, Metastable State discovery, and output generation. The removed Live Console is **not** required to run NeuroSeq.
+Click **Run NeuroSeq** once. The **Run progress** panel shows input validation, spike preparation, Micro-Epoch networks, gamma sweep, critical points, Proto-state construction, Proto-state similarities, Metastable State discovery, and output generation.
 
 ![NeuroSeq progress checklist during a run](Images/gui_run_progress.png)
 

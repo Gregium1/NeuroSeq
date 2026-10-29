@@ -76,7 +76,7 @@ def normalized_laplacian_eigengaps(A: np.ndarray, *, min_k: int, max_k: int | No
         raise ValueError("The affinity matrix must be symmetric by construction.")
     np.fill_diagonal(A0, 0.0)
 
-    # Determine the number of Micro states represented in the graph.
+    # Determine the number of Proto-states represented in the graph.
     n = int(A0.shape[0])
     if n <= 1:
         return {"selected_k": 1, "candidate_ks": [], "eigenvalues": [], "eigengaps": []}

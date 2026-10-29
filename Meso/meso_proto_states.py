@@ -1,7 +1,7 @@
 #####  Meso/meso_collect.py    
 
 """
-Canonical Micro-State Collection for Meso Analysis
+Canonical Proto-state Collection for Meso Analysis
 =================================================
 
 Module
@@ -10,7 +10,7 @@ Meso.meso_collect
 
 Purpose
 -------
-Collect the canonical Micro-state representations required by the NeuroSeq
+Collect the canonical Proto-state representations required by the NeuroSeq
 Meso pipeline.
 
 Scientific Role
@@ -136,7 +136,7 @@ def collect_proto_states(
     base_dir: str | Path,
 ) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
     """
-    Collect canonical Micro-state vectors and Louvain assignments.
+    Collect canonical Proto-state vectors and Louvain assignments.
 
     Parameters
     ----------

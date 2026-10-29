@@ -15,7 +15,7 @@ Meso pipeline.
 
 Scientific Role
 ---------------
-After spectral clustering identifies groups of related Micro states, the
+After spectral clustering identifies groups of related Proto-states, the
 resulting integer labels are converted into a deterministic and interpretable
 representation. Clusters are reordered according to their first temporal
 appearance, ensuring that Family A corresponds to the earliest discovered
@@ -28,7 +28,7 @@ spectral clustering result.
 Outputs
 -------
 This module returns canonical family labels together with tables that map
-every Micro state to its spectral family.
+every Proto-state to its spectral family.
 
 Author
 ------
@@ -94,7 +94,7 @@ def labels_to_family_df(
     Parameters
     ----------
     state_ids : list[str]
-        Ordered Micro-state identifiers.
+        Ordered Proto-state identifiers.
     labels : numpy.ndarray
         Temporally compressed spectral labels.
     labels_raw : numpy.ndarray
@@ -103,7 +103,7 @@ def labels_to_family_df(
     Returns
     -------
     pandas.DataFrame
-        Canonical table linking every Micro state to its raw spectral label,
+        Canonical table linking every Proto-state to its raw spectral label,
         temporally compressed label, and alphabetic family identifier.
 
     Notes
@@ -115,7 +115,7 @@ def labels_to_family_df(
 
     rows = []
 
-    # Assemble one canonical record for every Micro state.
+    # Assemble one canonical record for every Proto-state.
     for idx, uid in enumerate(state_ids):
 
         # Convert integer family labels into human-readable letters.

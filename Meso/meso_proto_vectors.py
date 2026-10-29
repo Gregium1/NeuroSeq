@@ -10,11 +10,11 @@ Meso.meso_proto_vectors
 
 Purpose
 -------
-Construct firing-rate representations for every consensus Micro state and
+Construct firing-rate representations for every consensus Proto-state and
 compute pairwise similarity and distance matrices describing the relationships
 between those states.
 
-Each final Micro state is represented by a firing-rate vector whose elements
+Each final Proto-state is represented by a firing-rate vector whose elements
 correspond to the mean firing rates of all recorded neurons during that state.
 
 These state-level representations provide one of the principal inputs to the
@@ -56,7 +56,7 @@ Cosine similarity
     patterns rather than absolute firing-rate magnitude.
 
 Together with the state Louvain NMI matrix, these quantities are used during
-the Meso analysis to characterize relationships between Micro states.
+the Meso analysis to characterize relationships between Proto-states.
 
 Outputs
 -------

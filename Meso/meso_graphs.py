@@ -10,12 +10,12 @@ Meso.meso_graphs
 
 Purpose
 -------
-Visualize the Micro-state affinity structure used by the NeuroSeq Meso
+Visualize the Proto-state affinity structure used by the NeuroSeq Meso
 analysis.
 
 Scientific Role
 ---------------
-The Meso pipeline represents pairwise relationships between Micro states
+The Meso pipeline represents pairwise relationships between Proto-states
 through a complete affinity matrix. This module converts that matrix into a
 readable graph visualization while preserving the full affinity information
 separately.
@@ -27,7 +27,7 @@ clustering or downstream inference.
 
 Two complementary graph figures are generated:
 
-1. A raw affinity graph showing the geometric organization of Micro states.
+1. A raw affinity graph showing the geometric organization of Proto-states.
 2. The same graph colored and labeled by the spectral family assignments.
 
 The graph layout is computed once and reused across both figures so that the
@@ -112,9 +112,9 @@ def edge_rows_for_affinity_plot(
     Parameters
     ----------
     A : numpy.ndarray
-        Square Micro-state affinity matrix.
+        Square Proto-state affinity matrix.
     state_ids : list[str]
-        Ordered Micro-state identifiers corresponding to the matrix rows and
+        Ordered Proto-state identifiers corresponding to the matrix rows and
         columns.
     edge_quantile : float, default=0.90
         Quantile used to retain only the strongest positive affinities.
@@ -199,14 +199,14 @@ def plot_affinity_graphs(
     max_edges: int = 5000,
 ) -> dict:
     """
-    Plot raw and spectrally labeled Micro-state affinity graphs.
+    Plot raw and spectrally labeled Proto-state affinity graphs.
 
     Parameters
     ----------
     A : numpy.ndarray
-        Complete Micro-state affinity matrix.
+        Complete Proto-state affinity matrix.
     state_ids : list[str]
-        Ordered Micro-state identifiers.
+        Ordered Proto-state identifiers.
     labels : numpy.ndarray
         Spectral family labels aligned with ``state_ids``.
     out_dir : str or pathlib.Path
@@ -251,7 +251,7 @@ def plot_affinity_graphs(
     edge_csv = out_dir / "similarity_graph_edges_for_plot.csv"
     edge_df.to_csv(edge_csv, index=False)
 
-    # Initialize one graph node for every Micro state, including isolated
+    # Initialize one graph node for every Proto-state, including isolated
     # states that may have no retained visualization edges.
     G = nx.Graph()
     for i, sid in enumerate(state_ids):
@@ -262,7 +262,7 @@ def plot_affinity_graphs(
     for _, row in edge_df.iterrows():
         G.add_edge(int(row["i"]), int(row["j"]), weight=float(row["S_score"]))
 
-    # Skip figure generation only when no Micro states are available.
+    # Skip figure generation only when no Proto-states are available.
     if G.number_of_nodes() == 0:
         return {"status": "SKIPPED", "reason": "empty_graph"}
 
