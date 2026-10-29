@@ -66,7 +66,7 @@ The canonical outputs written to
 
 are
 
-- ``state_vectors.csv``
+- ``proto_state_vectors.csv``
 - ``cosine_similarity.csv``
 - ``mean_firing_rate_distance.csv``
 
@@ -186,7 +186,7 @@ def run_state_vectors_and_matrices(
     dict[str, str]
         Dictionary containing the paths to
 
-        - ``state_vectors.csv``
+        - ``proto_state_vectors.csv``
         - ``cosine_similarity.csv``
         - ``mean_firing_rate_distance.csv``
 
@@ -389,7 +389,7 @@ def run_state_vectors_and_matrices(
         # Record the temporal boundaries and firing-rate vector associated with
         # the current state.
         row = {
-            "State": f"State_{i}",
+            "State": f"proto_state_{i}",
             "Start": s0,
             "End": s1,
             "Duration": duration,
@@ -413,7 +413,7 @@ def run_state_vectors_and_matrices(
     pd.DataFrame(state_info).to_csv(
         os.path.join(
             out_dir,
-            "state_vectors.csv",
+            "proto_state_vectors.csv",
         ),
         index=False,
     )
@@ -426,7 +426,7 @@ def run_state_vectors_and_matrices(
 
     # Construct the ordered list of state labels.
     labels = [
-        f"State_{i + 1}"
+        f"proto_state_{i + 1}"
         for i in range(len(state_vectors))
     ]
 
@@ -480,7 +480,7 @@ def run_state_vectors_and_matrices(
     return {
         "state_vectors_csv": os.path.join(
             out_dir,
-            "state_vectors.csv",
+            "proto_state_vectors.csv",
         ),
         "cosine_similarity_csv": os.path.join(
             out_dir,

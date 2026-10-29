@@ -7,6 +7,12 @@ subsampling and event/stimulus processing are intentionally absent.
 
 The pipeline is invoked once per call. Its output_root receives a ``NeuroSeq``
 subdirectory containing stage outputs and reproducibility summaries.
+
+Author
+------
+Greg Owanga
+Gregium Theory
+
 """
 from __future__ import annotations
 import json
@@ -14,6 +20,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 import pandas as pd
+import numpy as np
 from Micro.auto_select_micro_gamma import auto_select_micro_gamma
 from Meso.run_meso import run_meso
 
@@ -40,6 +47,26 @@ class RunConfig:
     do_graph: bool = True
 
 
+
+def observed_spike_endpoint(data_folder: str | Path) -> float:
+    """Return the latest finite spike timestamp across all SU files.
+
+    Spike-only CSVs do not encode the acquisition stop time. Consequently this
+    is the *last observed spike*, not necessarily the true recording endpoint.
+    """
+    last = float("-inf")
+    for path in Path(data_folder).glob("SU_*.csv"):
+        # Match the existing loader's first-column spike-time convention.
+        # Use the same multi-column, header-tolerant spike loader as Micro.
+        from Micro.micro_utils import _load_spike_times
+        times = _load_spike_times(path)
+        finite = times[np.isfinite(times)]
+        if finite.size:
+            last = max(last, float(finite.max()))
+    if not np.isfinite(last):
+        raise ValueError("No finite spike timestamps were found in the recording.")
+    return last
+
 def run_pipeline(cfg: RunConfig) -> list[dict]:
     """Run Micro then Meso exactly once on the full recorded population.
 
@@ -54,6 +81,13 @@ def run_pipeline(cfg: RunConfig) -> list[dict]:
         raise FileNotFoundError(f"No SU_*.csv files were found in {data}")
     if cfg.T <= 0 or cfg.total_duration <= 0:
         raise ValueError("T and total_duration must be positive")
+    observed_end = observed_spike_endpoint(data)
+    effective_end = min(cfg.start_time + cfg.total_duration, observed_end)
+    effective_duration = effective_end - cfg.start_time
+    if effective_duration <= 0:
+        raise ValueError(f"Start time {cfg.start_time:g} s is at or beyond the last observed spike ({observed_end:g} s).")
+    if effective_duration < cfg.total_duration:
+        print(f"Requested {cfg.total_duration:g} s; using {effective_duration:g} s ending at last observed spike {observed_end:g} s. Spike-only files do not establish acquisition end time.")
     output = Path(cfg.output_root) / "NeuroSeq"
     output.mkdir(parents=True, exist_ok=True)
     run_dir = output
@@ -62,7 +96,7 @@ def run_pipeline(cfg: RunConfig) -> list[dict]:
         cfg={"micro": {"data_folder": str(data), "T": cfg.T,
                        "seeds_per_gamma": cfg.seeds_per_gamma}},
         root=run_dir, start_time=cfg.start_time,
-        total_duration=cfg.total_duration, selected_su_ids=None,
+        total_duration=effective_duration, selected_su_ids=None,
         nmi_threshold_method="gmm2", gamma_min=cfg.auto_gamma_min,
         gamma_max=cfg.auto_gamma_max, gamma_step=cfg.auto_gamma_step,
         persistence_tolerance_bins=cfg.persistence_tolerance_bins,
@@ -75,11 +109,13 @@ def run_pipeline(cfg: RunConfig) -> list[dict]:
     runtime = time.perf_counter() - start
     summary = {"runtime_sec": runtime, "n_neurons": len(neurons),
                "T": cfg.T, "start_time": cfg.start_time,
-               "total_duration": cfg.total_duration,
+               "total_duration": effective_duration,
+               "requested_duration_sec": cfg.total_duration,
+               "observed_last_spike_sec": observed_end,
                "representative_gamma": ctx["state_louvain_gamma"],
                "micro_outputs": micro, "meso_outputs": meso}
     (run_dir / "run_summary.json").write_text(json.dumps(summary, indent=2, default=str), encoding="utf-8")
     pd.DataFrame([{"method": "NeuroSeq", "runtime_sec": runtime,
                    "n_neurons": summary["n_neurons"],
-                   "duration_sec": cfg.total_duration}]).to_csv(run_dir / "runtime.csv", index=False)
+                   "duration_sec": effective_duration}]).to_csv(run_dir / "runtime.csv", index=False)
     return [summary]

@@ -506,7 +506,7 @@ def auto_select_micro_gamma(
 
     # Save the complete representative-gamma plateau-selection table.
     selection_table.to_csv(
-        auto_root / "state_louvain_gamma_selection.csv",
+        auto_root / "proto_state_louvain_gamma_selection.csv",
         index=False,
     )
 
@@ -588,8 +588,8 @@ def auto_select_micro_gamma(
         "consensus_critical_points_csv": str(
             auto_root / "consensus_critical_points.csv"
         ),
-        "state_louvain_gamma_selection_csv": str(
-            auto_root / "state_louvain_gamma_selection.csv"
+        "proto_state_louvain_gamma_selection_csv": str(
+            auto_root / "proto_state_louvain_gamma_selection.csv"
         ),
         "diagnostics_json": str(
             auto_root / "diagnostics.json"

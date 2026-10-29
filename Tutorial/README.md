@@ -1,20 +1,18 @@
-# NeuroSeq — Written Tutorial
+# NeuroSeq — Tutorial
 
-This tutorial accompanies the **full-population** NeuroSeq Python GUI. It uses a small synthetic recording and explains the scientific meaning of the outputs.
+This tutorial explains how to run the full-population NeuroSeq GUI, interpret its outputs, and inspect the scientific diagnostics. Follow the six chapters in order:
 
-**Follow these chapters in order:**
+1. [Getting started](01_Getting_Started.md) — installation and the supplied 30-neuron example.
+2. [GUI walkthrough](02_GUI_Walkthrough.md) — folders, duration, parameters, settings, progress, Help, and results.
+3. [Understanding Micro](03_Understanding_Micro.md) — Micro-Epochs, gamma sweep, NMI, and consensus critical points.
+4. [Understanding Meso](04_Understanding_Meso.md) — Proto-state vectors, the exponential S-score, and Metastable States.
+5. [Interpreting outputs](05_Interpreting_Outputs.md) — the output directory, figures, CSVs, and 60-second raster views.
+6. [Reproducibility](06_Reproducibility.md) — repeatable runs and troubleshooting.
 
-1. [Getting started](01_Getting_Started.md) — installation, files, and a reproducible example.
-2. [GUI walkthrough](02_GUI_Walkthrough.md) — configure and run a full recording.
-3. [Micro explained](03_Understanding_Micro.md) — temporal networks, gamma sweep, and consensus boundaries.
-4. [Meso explained](04_Understanding_Meso.md) — Proto-states, firing rates, affinity, and Metastable States.
-5. [Output interpretation](05_Interpreting_Outputs.md) — where outputs live and what they mean.
-6. [Reproducibility and reviewer checklist](06_Reproducibility.md) — verify your run.
+The bundled [`Example_Data/`](Example_Data/) contains **30 synthetic spike trains spanning a nominal 60-second recording**, named `SU_1.csv` through `SU_30.csv`. `ground_truth_states.csv` contains the simulation's generating state labels and **is not used by NeuroSeq for inference**.
 
-The bundled [`Example_Data/`](Example_Data/) contains **30 synthetic neurons recorded for 60 seconds**. `ground_truth_states.csv` documents is the document with true states. NeuroSeq reads only the `SU_*.csv` files. The synthetic example is instructional. 
+## About the screenshots
 
-## Screenshots and video
-
-The `Images/` directory contains **screenshots supplied from a real NeuroSeq GUI run**, illustrating the interface, Micro diagnostics, and Meso results. The screenshots are generated from the bundled `Example_Data/` recording. A video walkthrough may be linked later, but all steps are documented in text.
+The screenshots in [`Images/`](Images/) illustrate a **separate completed analysis** (109 Proto-states and 10 Metastable States). They are not guaranteed outputs for the bundled example. Screenshots reflect the updated GUI, including the filtered output list, compact state-sequence preview, and light/dark themes. Micro critical-point diagnostics are still generated and can be opened with **Open Output Folder**, even though they are not listed in the simplified GUI output browser.
 
 [Return to the main README](../README.md).

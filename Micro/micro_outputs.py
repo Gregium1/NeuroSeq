@@ -396,7 +396,7 @@ def _write_clean_auto_gamma_outputs(
             "used only for Louvain clustering inside final consensus "
             "State_Windows"
         ),
-        "state_louvain_gamma_selection": gamma_selection_diag or {},
+        "proto_state_louvain_gamma_selection": gamma_selection_diag or {},
         "selected_consensus_critical_indices": [
             int(x)
             for x in consensus_critical_indices

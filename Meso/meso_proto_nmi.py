@@ -47,11 +47,11 @@ Outputs
 -------
 This module produces two canonical files:
 
-``state_louvain_nmi.csv``
+``proto_state_louvain_nmi.csv``
     Square symmetric matrix whose rows and columns correspond to the final
     Micro states.
 
-``state_louvain_nmi_long.csv``
+``proto_state_louvain_nmi_long.csv``
     Long-form table containing every pairwise state comparison together with
     the number of neurons included in each comparison.
 
@@ -121,8 +121,8 @@ def run_state_pair_nmi(
     dict[str, str]
         Dictionary containing the paths to
 
-        - ``state_louvain_nmi.csv``
-        - ``state_louvain_nmi_long.csv``
+        - ``proto_state_louvain_nmi.csv``
+        - ``proto_state_louvain_nmi_long.csv``
 
     Raises
     ------
@@ -152,11 +152,11 @@ def run_state_pair_nmi(
     # the final Micro analysis.
     state_dir = Path(base_dir) / "Proto-States"
 
-    source = state_dir / "state__x_cluster.csv"
+    source = state_dir / "proto_state_x_cluster.csv"
 
     # Preserve compatibility with older NeuroSeq output names.
     if not source.exists():
-        source = state_dir / "louvain_clusters_all_states.csv"
+        source = state_dir / "proto_state_louvain_clusters.csv"
 
     # Pairwise state comparisons require one of the canonical Louvain
     # assignment tables.
@@ -250,8 +250,8 @@ def run_state_pair_nmi(
             )
 
     # Define the canonical output filenames.
-    square_path = state_dir / "state_louvain_nmi.csv"
-    long_path = state_dir / "state_louvain_nmi_long.csv"
+    square_path = state_dir / "proto_state_louvain_nmi.csv"
+    long_path = state_dir / "proto_state_louvain_nmi_long.csv"
 
     # Write the square pairwise similarity matrix.
     pd.DataFrame(
@@ -294,12 +294,12 @@ def save_pairwise_nmi_from_pairs(pairs, state_ids, state_clusters, state_dir):
     for i, sid_i in enumerate(state_ids):
         for j, sid_j in enumerate(state_ids):
             long_rows.append({
-                "State_1": sid_i, "State_2": sid_j,
+                "State_1": f"proto_state_{i+1}", "State_2": f"proto_state_{j+1}",
                 "NMI": float(matrix[i, j]),
                 "Compared_Neurons": len(neurons[i] & neurons[j]),
             })
-    square = state_dir / "state_louvain_nmi.csv"
-    long = state_dir / "state_louvain_nmi_long.csv"
-    pd.DataFrame(matrix, index=state_ids, columns=state_ids).to_csv(square)
+    square = state_dir / "proto_state_louvain_nmi.csv"
+    long = state_dir / "proto_state_louvain_nmi_long.csv"
+    pd.DataFrame(matrix, index=[f"proto_state_{i+1}" for i in range(n)], columns=[f"proto_state_{i+1}" for i in range(n)]).to_csv(square)
     pd.DataFrame(long_rows).to_csv(long, index=False)
     return {"state_louvain_nmi_csv": str(square), "state_louvain_nmi_long_csv": str(long)}

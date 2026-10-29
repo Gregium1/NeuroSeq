@@ -340,6 +340,7 @@ def plot_timeline(
     title: str,
     face_label_col: str = "Label",
     text_label_col: str = "Label",
+    color_map_override: Dict[str, Any] | None = None,
 ) -> None:
     """
     Plot a horizontal timeline of Meso family assignments.
@@ -379,7 +380,7 @@ def plot_timeline(
     # Order intervals temporally and assign family colors by first appearance.
     df.sort_values(["Start", "End"], inplace=True)
     labels_for_color = df[face_label_col].astype(str).tolist()
-    color_map = timeline_color_map(labels_for_color)
+    color_map = color_map_override if color_map_override is not None else timeline_color_map(labels_for_color)
 
     # Scale figure width to the duration of the analyzed recording.
     xmin = float(df["Start"].min())
@@ -450,6 +451,7 @@ def plot_labeled_raster(
     face_label_col: str = "Label",
     text_label_col: str = "Label",
     legend_title: str = "Labels",
+    color_map_override: dict | None = None,
 ) -> None:
     """
     Plot single-unit spike activity over Meso family-labeled intervals.
@@ -505,14 +507,10 @@ def plot_labeled_raster(
         return
 
     neuron_names = [p.stem for p in su_files]
-    color_map = timeline_color_map(df[face_label_col].astype(str).tolist())
+    color_map = color_map_override or timeline_color_map(df[face_label_col].astype(str).tolist())
 
-    # Reserve a dedicated panel for the family-label legend.
-    fig = plt.figure(figsize=(16, 10))
-    gs = fig.add_gridspec(nrows=1, ncols=2, width_ratios=[4.8, 1.6], wspace=0.02)
-    ax = fig.add_subplot(gs[0, 0])
-    ax_leg = fig.add_subplot(gs[0, 1])
-    ax_leg.axis("off")
+    # Use the full canvas for the raster; interval labels already identify states.
+    fig, ax = plt.subplots(figsize=(16, 9))
 
     # Shade and annotate each family interval across all raster rows.
     for _, row in df.iterrows():
@@ -548,28 +546,10 @@ def plot_labeled_raster(
     ax.set_xlim(xmin, xmax)
     ax.set_ylim(-1, len(neuron_names) + 1.7)
     ax.set_yticks(np.arange(len(neuron_names)))
-    ax.set_yticklabels(neuron_names, fontsize=10)
+    ax.set_yticklabels([str(_extract_su_number_from_name(n)) for n in neuron_names], fontsize=10)
     ax.set_xlabel("Time (s)")
-    ax.set_ylabel("Neuron (SU_ID)")
+    ax.set_ylabel("Neuron")
     ax.set_title(title, fontsize=18, pad=18)
-
-    # Construct one legend entry for each distinct family color.
-    handles = []
-    seen = set()
-    for _, row in df.iterrows():
-        face_lab = str(row[face_label_col])
-        if face_lab in seen:
-            continue
-        same_text = df.loc[df[face_label_col].astype(str) == face_lab, text_label_col].astype(str).tolist()
-        same_text = list(dict.fromkeys(same_text))
-        label = f"{face_lab}: " + ", ".join(same_text[:8])
-        if len(same_text) > 8:
-            label += ", ..."
-        handles.append(mpatches.Patch(facecolor=color_map.get(face_lab), edgecolor="gray", label=label, alpha=0.7))
-        seen.add(face_lab)
-
-    if handles:
-        ax_leg.legend(handles=handles, title=legend_title, loc="upper left", frameon=False, fontsize=10, title_fontsize=13)
 
     plt.tight_layout()
     savefig_png_svg(out_png)
@@ -611,7 +591,7 @@ def _rows_from_state_labels(*, state_vectors, state_ids, label_lookup) -> pd.Dat
         if not np.isfinite(end) and np.isfinite(start) and np.isfinite(duration): end = start + duration
         if not (np.isfinite(start) and np.isfinite(end) and end > start): continue
         label = str(label_lookup.get(uid, "?"))
-        rows.append({"Unique_ID":uid,"Delivery":str(info.get("delivery","Full_Recording")),"File":info.get("file","state_vectors.csv"),"State":info.get("state",""),"Start":start,"End":end,"Duration":duration,"Component_Label":label,"Label":label,"label_map":label.lower()})
+        rows.append({"Unique_ID":uid,"Delivery":str(info.get("delivery","Full_Recording")),"File":info.get("file","proto_state_vectors.csv"),"State":info.get("state",""),"Start":start,"End":end,"Duration":duration,"Component_Label":label,"Label":label,"label_map":label.lower()})
 
     # Return the canonical state sequence in deterministic temporal order.
     df = pd.DataFrame(rows)
@@ -668,16 +648,46 @@ def materialize_family_outputs(*, out_dir: str, state_vectors, state_ids, family
 
     # Merge consecutive states assigned to the same family and save the result.
     merged = merge_consecutive_timeline_df(timeline, label_col="Label")
-    merged_csv = out_dir / "metastate_states_barcode.csv"; merged.to_csv(merged_csv,index=False)
+    merged_csv = out_dir / "state_sequence.csv"; merged.to_csv(merged_csv,index=False)
 
     # Record the canonical output paths and observed family count.
     result={"timeline_csv":str(timeline_csv),"merged_timeline_csv":str(merged_csv),"n_family_labels":int(timeline["Component_Label"].nunique()) if not timeline.empty else 0}
 
     # Generate publication-ready family timeline and raster figures when requested.
     if do_plots and str(data_folder).strip():
-        timeline_png=out_dir/"metastate_states_barcode.png"
-        plot_timeline(timeline_df=merged,out_png=timeline_png,title="Meso family timeline (spectral labels)",face_label_col="Label",text_label_col="Label")
-        raster_png=out_dir/"metastate_states_labels_merged.png"
-        plot_labeled_raster(data_folder=data_folder,timeline_df=merged,out_png=raster_png,title="Meso family-labeled raster",face_label_col="Label",text_label_col="Label",legend_title="Family labels")
-        result.update({"timeline_png":str(timeline_png),"timeline_svg":str(timeline_png.with_suffix('.svg')),"raster_png":str(raster_png),"raster_svg":str(raster_png.with_suffix('.svg'))})
+        timeline_png=out_dir/"state_sequence.png"
+        plot_timeline(timeline_df=merged,out_png=timeline_png,title="State sequence",face_label_col="Label",text_label_col="Label")
+        # Display-only first 60 s, preserving the full timeline's state colors.
+        if not merged.empty:
+            preview_start = float(merged["Start"].min())
+            preview_end = min(preview_start + 60.0, float(merged["End"].max()))
+            if preview_end - preview_start > 0 and float(merged["End"].max()) - preview_start > 60.0:
+                preview = merged[(merged["End"] > preview_start) & (merged["Start"] < preview_end)].copy()
+                preview["Start"] = preview["Start"].clip(lower=preview_start)
+                preview["End"] = preview["End"].clip(upper=preview_end)
+                plot_timeline(timeline_df=preview, out_png=out_dir / "state_sequence_first_60s.png",
+                              title=f"State sequence ({preview_start:g}–{preview_end:g} s)",
+                              color_map_override=timeline_color_map(merged["Label"].astype(str).tolist()))
+        raster_png=out_dir/"raster_with_states.png"
+        plot_labeled_raster(data_folder=data_folder,timeline_df=merged,out_png=raster_png,title="Raster with states",face_label_col="Label",text_label_col="Label",legend_title="Family labels")
+        # Additional 60-second views are visualizations of the SAME global
+        # assignments. No clustering or state discovery is repeated.
+        segments = []
+        if not merged.empty:
+            begin = float(merged["Start"].min())
+            finish = float(merged["End"].max())
+            segment_dir = ensure_dir(out_dir / "Raster_60s")
+            segment_start = begin
+            while segment_start < finish - 1e-9:
+                segment_end = min(segment_start + 60.0, finish)
+                clipped = merged[(merged["End"] > segment_start) & (merged["Start"] < segment_end)].copy()
+                clipped["Start"] = clipped["Start"].clip(lower=segment_start)
+                clipped["End"] = clipped["End"].clip(upper=segment_end)
+                segment_png = segment_dir / f"raster_with_states_{len(segments) + 1}.png"
+                plot_labeled_raster(data_folder=data_folder, timeline_df=clipped,
+                                    out_png=segment_png, title=f"Raster with states ({segment_start:g}–{segment_end:g} s)",
+                                    color_map_override=timeline_color_map(merged["Label"].astype(str).tolist()))
+                segments.append(str(segment_png))
+                segment_start = segment_end
+        result.update({"timeline_png":str(timeline_png),"timeline_svg":str(timeline_png.with_suffix('.svg')),"raster_png":str(raster_png),"raster_svg":str(raster_png.with_suffix('.svg')),"raster_segments":segments})
     return result

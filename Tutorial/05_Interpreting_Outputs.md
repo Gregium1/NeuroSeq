@@ -1,88 +1,81 @@
 # 5. Interpreting NeuroSeq outputs
 
-## Directory overview
+## Where NeuroSeq saves results
 
-The GUI's output selection is a **parent directory**. NeuroSeq writes into `<output parent>/NeuroSeq/`:
+Choose an **Output folder** in the GUI. NeuroSeq creates a `NeuroSeq/` subdirectory beneath it. The key output areas are:
 
 ```text
 NeuroSeq/
-├── Micro/                  # Micro diagnostics and micro_ctx.json
-├── Auto_Micro_Gamma/       # Gamma sweep and critical-point diagnostics
-├── Meso/                   # Proto-state and Metastable State outputs
-├── run_summary.json       # Main run metadata and returned output paths
-└── runtime.csv            # Compact runtime and neuron-count summary
+├── Micro/                         # Micro handoff and diagnostics
+├── Auto_Micro_Gamma/              # Gamma selection and critical points
+├── Meso/
+│   └── Meso_Sequence/
+│       ├── Proto-States/          # Proto-state comparison tables (location may vary)
+│       ├── Similarity_Graphs/     # Similarity graph exports
+│       └── Primary_Output/
+│           ├── state_sequence.csv
+│           ├── state_sequence.png / .svg
+│           ├── raster_with_states.png / .svg
+│           └── Raster_60s/
+│               ├── raster_with_states_1.png / .svg
+│               ├── raster_with_states_2.png / .svg
+│               └── ...
+├── run_summary.json
+└── runtime.csv
 ```
 
-Nested paths depend on the workflow; use `run_summary.json` and `Micro/micro_ctx.json` to locate the actual generated files. The names below are taken from the current source code, but not all products are guaranteed for every run or option.
+**Note:** The tree highlights key names and is illustrative; some CSVs and directories may be nested differently by the current workflow. Use `run_summary.json`, `Micro/micro_ctx.json`, and **Open Output Folder** to locate exact paths. The GUI's **Output files** table intentionally shows only main presentation files, not every CSV or diagnostic.
 
-## Run summaries
+## Main figures
 
 | File | Interpretation |
 | --- | --- |
-| `run_summary.json` | Runtime in seconds, analyzed neuron count, `T`, interval start and duration, representative gamma, and returned Micro/Meso output dictionaries. |
-| `runtime.csv` | One-row summary with method, runtime seconds, neuron count, and analyzed duration. Runtime is machine- and environment-dependent. |
-| `Micro/micro_ctx.json` | Authoritative handoff from Micro to Meso. Check representative gamma and saved output paths. |
+| `state_sequence.png` / `.svg` | Full timeline of inferred Metastable State labels; colors and letters indicate categories. |
+| `state_sequence.csv` | State sequence in machine-readable form. |
+| `raster_with_states.png` / `.svg` | Full spike raster with colored Metastable State intervals. |
+| `Raster_60s/raster_with_states_1.png` / `.svg` | First 60-second raster view (or shorter final available interval). |
+| `Raster_60s/raster_with_states_2.png` / `.svg`, etc. | Subsequent consecutive 60-second views, numbered in chronological order. |
+| `similarity_graph_kmeans.png` / `.svg` | Visualization of the Proto-state similarity graph with inferred cluster labels. |
+| `spike_raster...png` | Spike raster without the overlaid Metastable State bands, when generated. |
 
-## Micro diagnostic outputs
+**Important:** The 60-second raster views are **visualization only**. Micro and Meso analyze the entire effective interval together. A Metastable State crossing a 60-second boundary retains its label and color; the plots do not create new transitions. The GUI preview shows the **first 60 seconds** of a long state sequence, but the saved full-length figure still covers the complete interval.
 
-| File (basename) | Interpretation |
+![Principal files in the GUI](Images/gui_files.png)
+
+![State sequence preview](Images/gui_state_sequence_preview.png)
+
+![Raster with states](Images/gui_raster_with_states.png)
+
+## Diagnostic files and numerical results
+
+| File | Interpretation |
 | --- | --- |
-| `gamma_structure_selection.csv` | Structural/gamma-sweep diagnostics used to evaluate candidate resolutions. |
-| `critical_point_persistence_map.csv` | How candidate temporal boundaries persist across gamma values. |
-| `consensus_critical_point_bands.csv` | Candidate boundaries consolidated into consensus bands. |
-| `consensus_critical_points.csv` | Final selected critical-point times used to delimit Proto-states. |
-| `state_louvain_gamma_selection.csv` | Representative gamma selection diagnostics. |
+| `run_summary.json` | Runtime, number of neurons, requested/effective interval metadata where available, gamma and Micro/Meso result references. |
+| `runtime.csv` | Compact runtime summary; runtime depends on the machine and environment. |
+| `Micro/micro_ctx.json` | Handoff containing Micro boundaries, selected gamma and output references. |
+| `proto_state_louvain_gamma_selection.csv` | Representative gamma selection. |
+| `critical_point_persistence_map.csv` | Critical-point persistence across gamma. |
+| `consensus_critical_points.csv` | Selected Proto-state boundaries. |
+| `proto_state_vectors.csv` | Firing-rate vectors for Proto-states (Hz); columns/identifiers use Proto-state terminology. |
+| `proto_state_louvain_nmi.csv` | Pairwise NMI between Proto-state Louvain partitions. |
+| `proto_state_louvain_nmi_long.csv` | Long-form NMI comparisons. |
+| `mean_firing_rate_distance.csv` | Pairwise firing-rate distance. |
+| `pairs_nmi_dist.csv` | Pairwise NMI and distance data, if emitted. |
+| `pairs_nmi_dist_score.csv` | Pairwise combined exponential S-score, if emitted. |
+| `s_score_matrix.csv` | Symmetric pairwise S-score matrix, if emitted. |
+| `spectral_similarity_matrix.csv` | Similarity/affinity matrix used in spectral grouping. |
+| `spectral_candidate_k_scores.csv` | Candidate-number diagnostics, if emitted. |
+| `spectral_state_labels.csv` | Spectral assignments; the Proto-state identifier column is `proto_state_index`. |
+| `similarity_graph_edges_for_plot.csv` | Edge data for the similarity-graph visualization. |
 
-**Reading advice:** Examine the actual CSV column headers and accompanying diagnostic plots. A high number of critical points can produce many short Proto-states; it does not automatically imply many distinct Metastable States.
+The **Proto-state** names in exported CSV files distinguish individual contiguous intervals from **Metastable State** labels, which can recur. In the relevant Proto-state tables, identifiers such as `proto_state_1` replace older `state_1` labels. Do not reinterpret a Proto-state index as a Metastable State identity.
 
-## Meso outputs
+## Interpreting counts and recurrence
 
-| File (basename) | Interpretation |
-| --- | --- |
-| `state_vectors.csv` | Population firing-rate signature for each Proto-state; neuron components are in spikes/s. Compare rows to see changes in activity patterns. |
-| `state_louvain_nmi.csv` | Pairwise NMI similarities between Proto-state neuronal partitions. |
-| `mean_firing_rate_distance.csv` | Pairwise distance matrix between Proto-state firing-rate vectors. |
-| `pairs_nmi_dist.csv` | Pairwise comparison table containing partition similarity and firing-rate distance. |
-| `pairs_nmi_dist_score.csv` | Pairwise table with the combined similarity score. |
-| `s_score_matrix.csv` | Pairwise similarity-score matrix. |
-| `spectral_affinity_matrix.csv` | Affinity matrix used for spectral grouping. |
-| `spectral_candidate_k_scores.csv` | Candidate cluster-count diagnostics; inspect the joint-selection outputs to understand the selected `k`. |
-| `spectral_state_labels.csv` | Assignment of Proto-states to spectral clusters. |
-| `metastate_states_labels.csv` | Metastable State labels and related interval information. |
-| `metastate_states_barcode.csv` | Timeline/barcode representation of the final labels. |
-| `metastate_states_barcode.png` | Visualization of the state sequence; colors indicate labels, not confidence. |
-| `similarity_graph.png` / `.svg` | Graph representation of Proto-state similarity (when graph outputs are enabled). |
+![Completed analysis metrics](Images/gui_completed.png)
 
-### Worked interpretation
+The pictured run reports 109 Proto-states and 10 Metastable States. These counts are specific to that separate recording and its settings; **109 is not the neuron count**. Multiple Proto-states may share a Metastable State label because their population signatures are similar under the implemented affinity. Matching labels do not imply identical spikes, identical stimulus responses, or established causal mechanisms.
 
-Suppose two Proto-state intervals occur at different times but receive the same Metastable State label. This means the spectral grouping judged their neuronal partitions and firing-rate signatures sufficiently similar under the implemented affinity. It **does not** mean the intervals have identical spike trains, and it does not by itself prove that they correspond to the same stimulus or behavior.
+NeuroSeq does not infer stimulus selectivity, anatomical connectivity, or ground-truth accuracy automatically. Such conclusions require independent metadata and validation.
 
-Likewise, if `state_vectors.csv` contains many Proto-states while the final label table contains fewer unique Metastable State labels, that is expected: Meso groups multiple Proto-states into a smaller number of recurring state categories.
-
-## What NeuroSeq does *not* infer automatically
-
-NeuroSeq does not establish stimulus selectivity, anatomical connectivity, causal mechanisms, or ground-truth accuracy from the output files alone. Such claims require independent experimental metadata or validation analyses. 
 [Next: Reproducibility](06_Reproducibility.md).
-
-
-## Visual guide to locating and interpreting outputs
-
-### Micro: persistence and consensus
-
-![Micro diagnostic output list](Images/gui_micro_output.png)
-
-Open `critical_point_persistence_map.png` for a visual survey of candidate critical points across gamma. Consult `critical_point_persistence_map.csv` for the data behind the plot. The `consensus_critical_points.csv` and `consensus_critical_point_bands.csv` files are more appropriate for inspecting the final selected boundaries.
-
-### Meso: timeline and spike raster
-
-![Meso output list](Images/gui_meso_output_metastate.png)
-
-Open `metastate_states_labels_merged.png` for the state-labeled spike raster. The `.svg` counterpart is suitable for scalable vector graphics. Use the accompanying label CSV files for downstream numerical analysis rather than extracting boundaries from the image.
-
-### Summary: interpretation of counts
-
-![NeuroSeq completion metrics](Images/gui_completed.png)
-
-The screenshot shows a particular run with 109 Proto-states and 10 Metastable States. A Proto-state is a time interval constructed from consensus boundaries; a Metastable State groups related Proto-states. **109 is not the number of neurons**, and neither count is fixed by the GUI. Results will vary with the recording and analysis parameters.
-
-

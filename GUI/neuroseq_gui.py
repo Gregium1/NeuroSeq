@@ -13,6 +13,7 @@ Gregium Theory
 from __future__ import annotations
 
 import json
+import os
 import queue
 import tkinter as tk
 from pathlib import Path
@@ -223,7 +224,8 @@ class NeuroSeqGUI(tk.Tk):
 
         core = CollapsibleSection(body, title="Core parameters", expanded=False)
         core.grid(row=4, column=0, sticky="ew", pady=6)
-        core_fields = (("Micro-Epoch T (s)", "T"),)
+        core_fields = (("Micro-Epoch T (s)", "T"), ("Gamma minimum", "auto_gamma_min"),
+                       ("Gamma maximum", "auto_gamma_max"), ("Gamma step", "auto_gamma_step"))
         for row, (label, key) in enumerate(core_fields):
             LabeledEntry(core.body, label=label, variable=self.vars[key]).grid(
                 row=row,
@@ -270,8 +272,7 @@ class NeuroSeqGUI(tk.Tk):
     def _build_run_panel(self, parent) -> None:
         right = ttk.Frame(parent, style="Card.TFrame", padding=16)
         right.grid(row=0, column=1, sticky="nsew", padx=(8, 0))
-        right.rowconfigure(1, weight=2)
-        right.rowconfigure(2, weight=3)
+        right.rowconfigure(1, weight=1)
         right.columnconfigure(0, weight=1)
 
         top = ttk.Frame(right, style="Card.TFrame")
@@ -293,32 +294,12 @@ class NeuroSeqGUI(tk.Tk):
         )
         self.run_button.grid(row=1, column=0, sticky="ew", pady=(10, 10))
 
-        console_card = ttk.Frame(right, style="Card.TFrame", padding=10)
-        console_card.grid(row=1, column=0, sticky="nsew", pady=(0, 10))
-        console_card.rowconfigure(1, weight=1)
-        console_card.columnconfigure(0, weight=1)
-
-        console_bar = ttk.Frame(console_card, style="Card.TFrame")
-        console_bar.grid(row=0, column=0, sticky="ew", pady=(0, 6))
-
-        ttk.Label(
-            console_bar,
-            text="Live console",
-            style="Card.TLabel",
-            font=("Segoe UI", 10, "bold"),
-        ).pack(side="left")
-
-        ttk.Button(
-            console_bar,
-            text="Clear",
-            command=self.console_clear_later,
-        ).pack(side="right")
-
-        self.console = ConsoleBox(console_card)
-        self.console.grid(row=1, column=0, sticky="nsew")
+        # Keep diagnostic logging without consuming visible space.
+        self.console = ConsoleBox(right)
+        self.parameter_summary = None
 
         files_card = ttk.Frame(right, style="Card.TFrame", padding=10)
-        files_card.grid(row=2, column=0, sticky="nsew", pady=(0, 10))
+        files_card.grid(row=1, column=0, sticky="nsew", pady=(0, 10))
         files_card.rowconfigure(1, weight=1)
         files_card.columnconfigure(0, weight=1)
 
@@ -350,9 +331,14 @@ class NeuroSeqGUI(tk.Tk):
             open_path=NeuroSeqBackend.open_path,
         )
         self.output_files.grid(row=1, column=0, sticky="nsew")
+        self.preview_label = ttk.Label(files_card, text="State sequence preview (first 60 s for long recordings)", style="Card.TLabel")
+        self.preview_label.grid(row=2, column=0, sticky="w", pady=(8, 2))
+        self.preview_image = ttk.Label(files_card, text="Available after analysis", style="Card.TLabel")
+        self.preview_image.grid(row=3, column=0, sticky="ew")
+        self._preview_photo = None
 
         actions = ttk.Frame(right, style="Card.TFrame")
-        actions.grid(row=3, column=0, sticky="ew", pady=(0, 10))
+        actions.grid(row=2, column=0, sticky="ew", pady=(0, 10))
 
         self.open_output_button = ttk.Button(
             actions,
@@ -382,14 +368,112 @@ class NeuroSeqGUI(tk.Tk):
         )
         self.exit_button.pack(side="right")
 
+        self.help_button = ttk.Button(actions, text="Help", command=self._show_help)
+        self.help_button.pack(side="right", padx=(0, 6))
+
         self.metrics = MetricsPanel(right)
-        self.metrics.grid(row=4, column=0, sticky="ew")
+        self.metrics.grid(row=3, column=0, sticky="ew")
         self.metrics.set_metrics([
             ("Status", "Ready"),
             ("Runtime", "—"),
             ("Proto-states", "—"),
             ("Metastable States", "—"),
         ])
+
+    def _show_help(self) -> None:
+        """Show a readable, scrollable help window without blocking the GUI."""
+        dialog = tk.Toplevel(self)
+        dialog.title("NeuroSeq | Help")
+        dialog.geometry("680x580")
+        dialog.minsize(540, 420)
+        dialog.transient(self)
+        dialog.configure(background=self.palette.background)
+        dialog.columnconfigure(0, weight=1)
+        dialog.rowconfigure(1, weight=1)
+
+        header = ttk.Frame(dialog, style="Header.TFrame", padding=(22, 16))
+        header.grid(row=0, column=0, sticky="ew")
+        ttk.Label(header, text="NeuroSeq Help", style="Title.Header.TLabel").pack(anchor="w")
+        ttk.Label(header, text="A guide to the analysis controls and outputs",
+                  style="Subtitle.Header.TLabel").pack(anchor="w", pady=(3, 0))
+
+        area = ttk.Frame(dialog, padding=(20, 14))
+        area.grid(row=1, column=0, sticky="nsew")
+        area.columnconfigure(0, weight=1)
+        area.rowconfigure(0, weight=1)
+        canvas = tk.Canvas(area, highlightthickness=0, background=self.palette.background)
+        scroll = ttk.Scrollbar(area, orient="vertical", command=canvas.yview)
+        canvas.configure(yscrollcommand=scroll.set)
+        canvas.grid(row=0, column=0, sticky="nsew")
+        scroll.grid(row=0, column=1, sticky="ns")
+        body = ttk.Frame(canvas, padding=(4, 2, 14, 8))
+        window_id = canvas.create_window((0, 0), window=body, anchor="nw")
+        body.bind("<Configure>", lambda _event: canvas.configure(scrollregion=canvas.bbox("all")))
+        canvas.bind("<Configure>", lambda event: canvas.itemconfigure(window_id, width=event.width))
+
+        sections = [
+            ("1. Recording and output folders", [
+                ("Recording folder", "Choose the folder containing SU_*.csv spike-train files."),
+                ("Output folder", "Choose where NeuroSeq will save its results."),
+                ("Browse", "Opens a folder picker starting in the directory where NeuroSeq was launched."),
+                ("Load settings", "Loads previously saved analysis settings from a JSON file and fills in the GUI fields. Review the values before running."),
+                ("Save settings", "Saves the current analysis settings to a JSON file so they can be reused later. This does not start an analysis."),
+                ("Reset", "Restores the default analysis settings and clears the recording and output folder selections."),
+            ]),
+            ("2. Analysis interval and parameters", [
+                ("Start time", "Beginning of the analysis interval, in seconds."),
+                ("Duration", "Requested interval length. If it extends past the last observed spike, NeuroSeq shortens the interval."),
+                ("Micro-Epoch T", "Duration of each Micro-Epoch window, in seconds."),
+                ("Advanced parameters", "Minimum, maximum, and step size for the Louvain gamma sweep."),
+            ]),
+            ("3. Run controls", [
+                ("Run NeuroSeq", "Starts one full-population Micro and Meso analysis."),
+                ("Run progress", "Shows the current analysis stage and completed steps."),
+                ("Stop", "Requests cancellation of the current run."),
+                ("Exit", "Closes the NeuroSeq application."),
+            ]),
+            ("4. Results", [
+                ("Output files", "Double-click a listed file to open it."),
+                ("Refresh files", "Updates the list of principal output figures."),
+                ("State sequence preview", "Displays the first 60 seconds for long recordings; the complete sequence is saved separately."),
+                ("Open Output Folder", "Opens all results, including intermediate scientific files."),
+                ("Save Run Summary", "Saves the GUI's summary of the completed analysis."),
+            ]),
+        ]
+        for title, items in sections:
+            section = ttk.LabelFrame(body, text=title, padding=(12, 10))
+            section.pack(fill="x", pady=(0, 12))
+            for label, description in items:
+                ttk.Label(section, text=label, font=("Segoe UI", 10, "bold"),
+                          wraplength=560).pack(anchor="w", pady=(5, 1))
+                ttk.Label(section, text=description, wraplength=560,
+                          justify="left").pack(anchor="w", pady=(0, 7))
+
+        footer = ttk.Frame(dialog, padding=(18, 8, 18, 16))
+        footer.grid(row=2, column=0, sticky="ew")
+        ttk.Button(footer, text="Close", command=dialog.destroy).pack(side="right")
+        dialog.bind("<Escape>", lambda _event: dialog.destroy())
+        dialog.focus_set()
+
+    def _update_preview(self, root: str) -> None:
+        from PIL import Image, ImageTk
+        folder = Path(root)
+        # Prefer a readable 60-second preview for long recordings.
+        images = list(folder.rglob("state_sequence_first_60s.png")) if folder.exists() else []
+        if not images and folder.exists():
+            images = list(folder.rglob("state_sequence.png"))
+        if not images:
+            self.preview_image.configure(image="", text="No state sequence yet")
+            self._preview_photo = None
+            return
+        try:
+            with Image.open(images[0]) as original:
+                pic = original.copy()
+            pic.thumbnail((700, 190))
+            self._preview_photo = ImageTk.PhotoImage(pic)
+            self.preview_image.configure(image=self._preview_photo, text="")
+        except Exception as exc:
+            self.preview_image.configure(image="", text=f"Preview unavailable: {exc}")
 
     def console_clear_later(self) -> None:
         self.console.clear()
@@ -446,7 +530,9 @@ class NeuroSeqGUI(tk.Tk):
 
     def _refresh_output_files(self) -> None:
         folder=self._result.get("output_root") if self._result else str(self.vars["output_root"].get()).strip()
-        if folder: self.output_files.load_from_folder(folder)
+        if folder:
+            self.output_files.load_from_folder(folder)
+            self._update_preview(folder)
 
     def _number(self, key: str, cast):
         value = str(self.vars[key].get()).strip()
@@ -550,6 +636,7 @@ class NeuroSeqGUI(tk.Tk):
         ])
         self._append_console("NeuroSeq completed successfully.")
         self.output_files.load_from_folder(result.get("output_root", ""))
+        self._update_preview(result.get("output_root", ""))
         self._set_idle_state()
 
     def _run_error(self, message: str, details: str) -> None:

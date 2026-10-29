@@ -10,6 +10,7 @@ Gregium Theory
 from __future__ import annotations
 
 import tkinter as tk
+import os
 from pathlib import Path
 from tkinter import filedialog, ttk
 
@@ -38,9 +39,9 @@ class PathPicker(ttk.Frame):
     def _browse(self) -> None:
         current = str(self.variable.get()).strip()
         if self.mode == "folder":
-            value = filedialog.askdirectory(initialdir=current or None)
+            value = filedialog.askdirectory(initialdir=current if current and Path(current).is_dir() else os.getcwd())
         else:
-            value = filedialog.askopenfilename(initialdir=current or None, filetypes=self.filetypes)
+            value = filedialog.askopenfilename(initialdir=current if current and Path(current).is_dir() else os.getcwd(), filetypes=self.filetypes)
         if value:
             self.variable.set(value)
 
@@ -196,7 +197,9 @@ class OutputFiles(ttk.Frame):
         for item in self.tree.get_children(): self.tree.delete(item)
         if not root.exists(): return 0
         allowed={".csv",".json",".txt",".png",".jpg",".jpeg",".svg",".gexf",".xlsx"}
-        paths=sorted(p for p in root.rglob("*") if p.is_file() and p.suffix.lower() in allowed)
+        visible = {"state_sequence", "raster_with_states", "spike_raster", "similarity_graph_kmeans"}
+        paths=sorted(p for p in root.rglob("*") if p.is_file() and p.suffix.lower() in allowed
+                     and (p.stem in visible or p.stem.startswith("spike_raster_allSUs_") or (p.parent.name == "Raster_60s" and p.stem.startswith("raster_with_states_") and p.stem.rsplit("_",1)[-1].isdigit())))
         for p in paths:
             size=p.stat().st_size; size_text=f"{size/1024:.1f} KB" if size<1024**2 else f"{size/1024**2:.1f} MB"
             self.tree.insert("","end",iid=str(p),text=str(p.relative_to(root)),values=(p.suffix[1:].upper(),size_text))

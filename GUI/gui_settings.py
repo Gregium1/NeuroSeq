@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 from dataclasses import asdict, fields
 from pathlib import Path
+import os
 from typing import Any
 
 from .neuroseq_backend import NeuroSeqGUIConfig

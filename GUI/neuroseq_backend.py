@@ -376,7 +376,7 @@ class NeuroSeqBackend:
                             self.on_error(
                                 "NeuroSeq ended without a completion report.",
                                 f"Worker exit code: {code}. The final 'finished' or "
-                                "'error' message was not received. Check the live "
+                                "'error' message was not received. Check the diagnostic "
                                 "console and run_summary.json/runtime.csv for details."
                             )
                         terminal = True

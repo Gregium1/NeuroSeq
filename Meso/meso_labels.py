@@ -122,7 +122,7 @@ def labels_to_family_df(
         lab = letter_label(int(labels[idx]))
 
         rows.append({
-            "state_index": int(idx),
+            "proto_state_index": int(idx),
             "Unique_ID": uid,
             "Spectral_Label_Raw": int(labels_raw[idx]),
             "Spectral_Label": int(labels[idx]),

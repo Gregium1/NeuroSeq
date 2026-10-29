@@ -62,10 +62,10 @@ The canonical outputs written under
 
 are
 
-``louvain_clusters_all_states.csv``
+``proto_state_louvain_clusters.csv``
     Complete Louvain assignments together with temporal state information.
 
-``state__x_cluster.csv``
+``proto_state_x_cluster.csv``
     Compact table containing only
 
     - State
@@ -274,7 +274,7 @@ def run_state_windows_louvain(
                 random_state=int(seed),
             )
 
-        state = f"State_{idx}"
+        state = f"proto_state_{idx}"
 
         # Store the complete Louvain partition.
         state_df = pd.DataFrame({
@@ -293,16 +293,16 @@ def run_state_windows_louvain(
 
     # Save canonical outputs.
     all_df = pd.concat(cluster_out, ignore_index=True)
-    all_df.to_csv(os.path.join(out_dir, "louvain_clusters_all_states.csv"), index=False)
+    all_df.to_csv(os.path.join(out_dir, "proto_state_louvain_clusters.csv"), index=False)
 
     all_df[["State", "Neuron_ID", "Cluster"]].to_csv(
-        os.path.join(out_dir, "state__x_cluster.csv"),
+        os.path.join(out_dir, "proto_state_x_cluster.csv"),
         index=False,
     )
 
     # Return canonical output locations.
     return {
         "state_windows_dir": out_dir,
-        "louvain_clusters_all_states_csv": os.path.join(out_dir, "louvain_clusters_all_states.csv"),
-        "state_x_cluster_csv": os.path.join(out_dir, "state__x_cluster.csv"),
+        "louvain_clusters_all_states_csv": os.path.join(out_dir, "proto_state_louvain_clusters.csv"),
+        "state_x_cluster_csv": os.path.join(out_dir, "proto_state_x_cluster.csv"),
     }

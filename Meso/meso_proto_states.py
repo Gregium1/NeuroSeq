@@ -67,7 +67,7 @@ def _normalize_state(value: object) -> str:
     str
         Canonical state identifier.
     """
-    return str(value).replace("State_", "").replace("State ", "").strip()
+    return str(value).replace("proto_state_", "").replace("State_", "").replace("State ", "").strip()
 
 
 def _file_suffix(path: Path, prefix: str) -> str:
@@ -113,9 +113,9 @@ def _match_cluster_file(vector_path: Path, cluster_paths: list[Path]) -> Path:
     """
 
     # Match files using their canonical filename suffixes.
-    suffix = _file_suffix(vector_path, "state_vectors")
+    suffix = _file_suffix(vector_path, "proto_state_vectors")
     exact = [p for p in cluster_paths
-             if _file_suffix(p, "louvain_clusters_all_states") == suffix]
+             if _file_suffix(p, "proto_state_louvain_clusters") == suffix]
     if exact:
         return exact[0]
 
@@ -125,7 +125,7 @@ def _match_cluster_file(vector_path: Path, cluster_paths: list[Path]) -> Path:
 
     # Prefer the canonical filename when several tables exist.
     plain = [p for p in cluster_paths
-             if p.stem.lower() == "louvain_clusters_all_states"]
+             if p.stem.lower() == "proto_state_louvain_clusters"]
     if plain:
         return plain[0]
 
@@ -183,13 +183,13 @@ def collect_proto_states(
         raise RuntimeError(message)
 
     # Locate the canonical state-vector and Louvain outputs.
-    vector_paths = sorted(state_dir.glob("state_vectors*.csv"))
-    cluster_paths = sorted(state_dir.glob("louvain_clusters_all_states*.csv"))
+    vector_paths = sorted(state_dir.glob("proto_state_vectors*.csv"))
+    cluster_paths = sorted(state_dir.glob("proto_state_louvain_clusters*.csv"))
 
     if not vector_paths:
-        raise RuntimeError(f"No state_vectors*.csv found in {state_dir}")
+        raise RuntimeError(f"No proto_state_vectors*.csv found in {state_dir}")
     if not cluster_paths:
-        raise RuntimeError(f"No louvain_clusters_all_states*.csv found in {state_dir}")
+        raise RuntimeError(f"No proto_state_louvain_clusters*.csv found in {state_dir}")
 
     state_vectors: dict[str, dict[str, Any]] = {}
     state_clusters: dict[str, dict[str, Any]] = {}

@@ -352,7 +352,7 @@ def _write_counts_and_raster(
     )
     plt.yticks(
         range(1, len(sorted_items) + 1),
-        [sid for sid, _ in sorted_items],
+        [str(sid).removeprefix("SU_") for sid, _ in sorted_items],
     )
     plt.xlim(start_time, end_time)
 

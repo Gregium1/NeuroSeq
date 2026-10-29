@@ -1,10 +1,10 @@
 # NeuroSeq
 
-**A functional-network toolbox for analyzing simultaneous neuronal spike trains**
+**A multi-scale functional-network toolbox for Proto-state segmentation and Metastable State discovery from neuronal spike trains**
 
 NeuroSeq identifies changes in neuronal population organization across time and groups related temporal patterns into **Metastable States**. It uses a two-stage **Micro–Meso** workflow and provides both a Python desktop GUI and a standalone Python launcher. The input is spike timing data; stimulus annotations, licking events, behavioral labels, and a user-specified number of states are **not required**.
 
-> **Reviewer-release scope:** This distribution contains the full-population Micro–Meso analysis only.
+**Scope:** NeuroSeq analyzes the full recorded neuronal population through its Micro–Meso pipeline. It does not require stimulus annotations or a predefined number of Metastable States.
 
 ## Contents
 
@@ -18,7 +18,7 @@ NeuroSeq identifies changes in neuronal population organization across time and 
 - [Reproducibility and verification](#reproducibility-and-verification)
 - [Troubleshooting](#troubleshooting)
 - [Architecture and source guide](#architecture-and-source-guide)
-- [Reviewer checklist](#reviewer-checklist)
+- [License and attribution](#license-and-attribution)
 
 ## Step-by-step tutorial
 
@@ -26,7 +26,7 @@ A complete written guide, GUI walkthrough, synthetic example recording, and expl
 
 ## Installation
 
-**Prerequisites:** A supported Python 3 installation, `pip`, and Tkinter for the GUI. Python **3.12** was present in the uploaded development archive, but this release has **not** been tested on all Python versions or operating systems. Python 3.12 is a sensible starting point for reproducing that environment. The exact package versions used in prior runs were not provided in a lockfile.
+**Prerequisites:** A supported Python 3 installation, `pip`, and Tkinter for the GUI. Python **3.12** is used in the documented Windows environment, but this release has **not** been tested on all Python versions or operating systems. Python 3.12 is a sensible starting point for reproducing that environment. The exact package versions used in prior runs may differ from a fresh installation.
 
 Download or clone the repository and open a terminal in its root directory (the directory containing `requirements.txt`).
 
@@ -94,9 +94,23 @@ From the repository root:
 python -m GUI.launcher
 ```
 
-In the GUI, select the input folder containing `SU_*.csv`, choose an output folder, specify the analysis start and duration, and set **Micro-Epoch T (s)**. Run the analysis and monitor the live progress messages. The gamma range and seeds are deliberately kept in the Python configuration rather than shown in Core Parameters.
+The **Recording folder** and **Output folder** fields are blank when the GUI opens. Select each using **Browse**; the file chooser starts in the directory from which NeuroSeq was launched. Choose a recording folder containing `SU_*.csv` files and a separate parent folder for the results.
+
+Set **Start time (s)** and **Duration (s)** under *Full recording*. Expand **Core parameters** to set the Micro-Epoch duration **T**, **Gamma minimum**, **Gamma maximum**, and **Gamma step**; collapse it to save space. **Load settings** imports previously saved settings, **Save settings** exports them, and **Reset** restores defaults and clears folder selections. The **Help** button explains these controls.
+
+Click **Run NeuroSeq** and follow the stages in **Run progress**. After completion, the bottom status cards show runtime, number of Proto-states, and number of Metastable States. The **Output files** panel lists the main result files; double-click a file to open it. **Refresh files** reloads that list from disk—it does not clear or delete existing results. **Open Output Folder** provides access to all detailed outputs, including critical-point diagnostics. **Save Run Summary** exports a run summary. **Stop** requests cancellation; **Exit** closes the GUI. The **Light/Dark** control changes the interface theme.
+
+The GUI also shows a **State sequence preview**. For recordings longer than 60 seconds, the preview displays the first 60 seconds of the *analyzed interval*, using the global state labels and colors. The full-length figure is still saved to disk. The GUI does not include a Live Console or a separate Run Parameters panel.
 
 The GUI launches the scientific pipeline in a worker process so that its interface can remain responsive. **The worker calls the same orchestrator as the standalone launcher**, and progress messages do not rerun Micro or Meso. Runtime depends on the number of neurons, recording duration, number of Micro-Epochs, gamma values, seeds, and hardware.
+
+### Recording duration and visualization
+
+If the requested end time exceeds the last **observed spike timestamp**, NeuroSeq limits the analysis to the available observed interval; shorter requested intervals remain unchanged. For example, a request for 70 seconds starting at 0 seconds is reduced to 60 seconds if the last observed spike is at 60 seconds. A start time beyond the observed data endpoint is invalid. **Important:** Spike-only CSVs cannot establish the true acquisition stop time: a silent trailing period is indistinguishable from unrecorded time. The requested and effective durations are recorded in `run_summary.json`.
+
+The full-recording `raster_with_states.png` is accompanied by consecutive 60-second raster views in `Meso/Meso_Sequence/Primary_Output/Raster_60s/`, named `raster_with_states_1.png`, `raster_with_states_2.png`, and so on (the final segment may be shorter). These are display-only slices of the **same** state assignments, using absolute recording times and consistent state colors; no independent state discovery occurs.
+
+Principal outputs include `state_sequence.png`, `raster_with_states.png`, `similarity_graph_kmeans.png`, and the Micro spike raster. Figures retain SVG versions. The previous `Materialized` directory is now `Primary_Output`.
 
 ## Running from Python
 
@@ -129,11 +143,11 @@ Then run from the project root:
 python run_neuroseq.py
 ```
 
-The code above is a **configuration example**. The bundled `run_neuroseq.py` retains development-machine paths and **must be edited** before use elsewhere.
+The code above is a **configuration example**. Check the paths in your local `run_neuroseq.py` and edit them for your machine before running.
 
 ## Scientific workflow
 
-### Micro: identify temporal critical points
+### Micro: identify temporal critical points and Proto-state boundaries
 
 1. The selected recording interval is divided into Micro-Epochs of duration `T` seconds.
 2. Spike counts are computed for each neuron in each Micro-Epoch.
@@ -146,14 +160,13 @@ The code above is a **configuration example**. The bundled `run_neuroseq.py` ret
 
 **Micro does not construct final Proto-state firing-rate vectors or pairwise Proto-state matrices.** Those operations belong to Meso in this architecture. The representative gamma controls within-Proto-state neuronal community detection; it does not independently redefine the consensus temporal boundaries.
 
-### Meso: construct Proto-states and identify Metastable States
+### Meso: construct Proto-state representations and identify Metastable States
 
 1. Consensus Micro critical points delimit the Proto-state intervals.
 2. Within each Proto-state, neuronal activity is summarized and a Louvain partition is computed using the representative gamma.
 3. Each Proto-state receives a population firing-rate vector; a component is the neuron's spike count in the interval divided by the interval duration.
 4. Pairwise comparisons are computed using neuronal partition similarity (NMI) and firing-rate-vector distance.
 5. Pairwise Meso affinity is computed using the **multiplicative exponential Gaussian-kernel S-score**, combining normalized firing-rate distance and neuronal-partition NMI; see the formula below and `Meso/meso_score.py`. The pairwise scores form a symmetric Proto-state affinity matrix with diagonal entries fixed at 1.
-The Meso affinity is the **multiplicative exponential Gaussian-kernel S-score**:
 
 \[
 S_{ij}=\exp\!\left(-\frac{\widetilde D_{ij}^{\,2}}{2\sigma_D^2}\right)
@@ -185,7 +198,7 @@ The scientific method and parameter definitions are controlled by the **source c
 | `meso_seed` | Meso spectral random seed | 42 |
 | `do_graph` | Whether Meso figures are generated | True |
 
-The gamma sweep includes **81 values** under the default range and increment. Gamma parameters are hidden in the GUI, **not removed** from the code. A fixed `T` is used in this release; do not describe this version as adaptive-T unless that capability is explicitly reintroduced.
+The default sweep from 1.07 to 1.15 in increments of 0.001 contains **81 gamma values** (including both endpoints). The gamma settings are available in the GUI under the expandable **Core parameters** section. This version uses a fixed `T`; it should not be described as adaptive-T.
 
 ## Outputs
 
@@ -197,14 +210,24 @@ output_parent/
     ├── Micro/
     │   └── micro_ctx.json
     ├── Auto_Micro_Gamma/
-    │   └── ... gamma-sweep and consensus diagnostics ...
+    │   └── proto_state_louvain_gamma_selection.csv
     ├── Meso/
-    │   └── ... Proto-state tables, similarities, labels, figures ...
+    │   └── Meso_Sequence/
+    │       ├── Primary_Output/
+    │       │   ├── state_sequence.png
+    │       │   ├── raster_with_states.png
+    │       │   └── Raster_60s/
+    │       │       ├── raster_with_states_1.png
+    │       │       └── ...
+    │       └── Similarity_Graphs/
+    │           └── similarity_graph_kmeans.png
     ├── run_summary.json
     └── runtime.csv
 ```
 
-Additional nested output folders are generated by the Micro and Meso modules. Output file availability can depend on the dataset, selected settings, and plotting paths. `run_summary.json` records the pipeline's returned outputs, neuron count, representative gamma, and runtime; `runtime.csv` provides a compact runtime summary. Do not interpret output file presence alone as a validation of state recovery.
+Additional nested output folders are generated by the Micro and Meso modules. The **Proto-States** outputs include `proto_state_vectors.csv`, `proto_state_louvain_clusters.csv`, `proto_state_x_cluster.csv`, `proto_state_louvain_nmi.csv`, and `proto_state_louvain_nmi_long.csv`. Their Proto-state identifiers use names such as `proto_state_1`. The **Similarity_Graphs** folder includes `similarity_graph_edges_for_plot.csv` and `similarity_graph_kmeans.png`/`.svg`. The Meso sequence diagnostics include `spectral_similarity_matrix.csv` and `spectral_state_labels.csv`; the latter uses the `proto_state_index` column. Main figures are also available in SVG where produced.
+
+ Output file availability can depend on the dataset, selected settings, and plotting paths. `run_summary.json` records the pipeline's returned outputs, neuron count, representative gamma, and runtime; `runtime.csv` provides a compact runtime summary. Do not interpret output file presence alone as a validation of state recovery.
 
 **Output-folder caution:** Select an output parent rather than the input spike folder. Existing files in a reused output directory may be overwritten; use a fresh directory for independent reviewer runs.
 
@@ -215,7 +238,7 @@ Additional nested output folders are generated by the Micro and Meso modules. Ou
 - Compare GUI and command-line runs using **the same input, settings, seeds, and environment**. Wall-clock runtimes can differ even if scientific outputs agree.
 - Compare consensus critical-point times, representative gamma, Proto-state boundaries, firing-rate vectors, Meso affinity matrices, and final Metastable State labels—not just the total number of states.
 - Cluster labels are arbitrary identifiers; a label permutation alone does not imply a different partition.
-- This source review checks import dependencies and Python syntax; **it does not establish numerical equivalence** or cross-platform behavior. A complete scientific regression test should be performed before publication.
+- A successful run and valid figures do not by themselves establish numerical equivalence or cross-platform reliability. Perform a scientific regression test before publication.
 
 ## Troubleshooting
 
@@ -224,7 +247,7 @@ Additional nested output folders are generated by the Micro and Meso modules. Ou
 | `ModuleNotFoundError: community` | Install `python-louvain` in the active Python environment. |
 | Tkinter cannot be imported | Install a Python/Tk distribution appropriate for the operating system. |
 | No `SU_*.csv` files found | Check the selected folder and exact filename pattern. |
-| GUI seems stalled | Inspect the gamma-sweep progress and worker console; Micro can dominate runtime. |
+| GUI seems stalled | Check the Run Progress stage, whether `run_summary.json` and `runtime.csv` were written, and any Python traceback in the launching terminal. Micro can dominate runtime. |
 | GUI slower than command line | Compare numerical-thread environment variables, Python executable, dataset, gamma settings, and seeds. |
 | Unexpected output nesting | Remember that the orchestrator appends `NeuroSeq/` to `output_root`. |
 | `tight_layout` Matplotlib warning | Inspect the affected figure; the warning does not necessarily indicate failed scientific computation. |
@@ -256,4 +279,6 @@ Additional nested output folders are generated by the Micro and Meso modules. Ou
 
 ## License and attribution
 
-See [LICENSE](LICENSE). Please cite the associated NeuroSeq manuscript when available. No manuscript DOI or publication citation is asserted in this release.
+See [LICENSE](LICENSE). Please cite the associated NeuroSeq manuscript when available. No manuscript DOI or publication citation is asserted in this README.
+
+

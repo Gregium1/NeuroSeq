@@ -36,14 +36,14 @@ change in node geometry.
 
 Outputs
 -------
-``affinity_graph_edges_for_plot.csv``
+``similarity_graph_edges_for_plot.csv``
     Edge list containing the strongest affinities selected for visualization.
 
 ``similarity_graph.png`` and ``similarity_graph.svg``
     Unlabeled affinity-graph visualization.
 
-``similarity_graph_spectral_kmeans_labels.png`` and
-``similarity_graph_spectral_kmeans_labels.svg``
+``similarity_graph_kmeans.png`` and
+``similarity_graph_kmeans.svg``
     Affinity graph colored and labeled by spectral family assignments.
 
 Author
@@ -248,7 +248,7 @@ def plot_affinity_graphs(
     )
 
     # Save the exact edge subset used to construct the displayed graph.
-    edge_csv = out_dir / "affinity_graph_edges_for_plot.csv"
+    edge_csv = out_dir / "similarity_graph_edges_for_plot.csv"
     edge_df.to_csv(edge_csv, index=False)
 
     # Initialize one graph node for every Micro state, including isolated
@@ -320,7 +320,7 @@ def plot_affinity_graphs(
 
     # Prepare deterministic family colors and letter labels for the second
     # graph while preserving the same node positions.
-    clustered_png = out_dir / "similarity_graph_spectral_kmeans_labels.png"
+    clustered_png = out_dir / "similarity_graph_kmeans.png"
     unique_labels = list(dict.fromkeys(int(x) for x in labels.tolist()))
     label_to_color_index = {lab: idx for idx, lab in enumerate(unique_labels)}
     cmap = plt.get_cmap("tab20")

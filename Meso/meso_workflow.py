@@ -120,10 +120,10 @@ def run_meso_workflow(cfg=None, **kwargs):
     # Materialize the deterministic single-family fallback for one state.
     if len(state_ids)==1:
         fallback=ensure_dir(out/"One_State_Fallback")
-        df=pd.DataFrame([{"state_index":0,"Unique_ID":state_ids[0],"Spectral_Label_Raw":0,"Spectral_Label":0,"Component_Label":"A","Cluster_Label":"A"}])
+        df=pd.DataFrame([{"proto_state_index":0,"Unique_ID":state_ids[0],"Spectral_Label_Raw":0,"Spectral_Label":0,"Component_Label":"A","Cluster_Label":"A"}])
         csv=fallback/"spectral_state_labels.csv"; df.to_csv(csv,index=False)
         materialized=materialize_family_outputs(
-            out_dir=str(fallback/"Materialized"),state_vectors=state_vectors,
+            out_dir=str(fallback/"Primary_Output"),state_vectors=state_vectors,
             state_ids=state_ids,family_label_csv=str(csv),
             data_folder=str(getattr(cfg,"DATA_FOLDER","")),
             do_plots=bool(getattr(cfg,"DO_GRAPH",True)))
@@ -144,7 +144,7 @@ def run_meso_workflow(cfg=None, **kwargs):
 
     # Save the dense S-score matrix used as the spectral affinity matrix.
     s_csv=save_s_score_matrix(pairs_score=scored,state_ids=state_ids,out_csv=out/"s_score_matrix.csv")
-    affinity_csv=out/"spectral_affinity_matrix.csv"; affinity_csv.write_text(Path(s_csv).read_text(),encoding="utf-8")
+    affinity_csv=out/"spectral_similarity_matrix.csv"; affinity_csv.write_text(Path(s_csv).read_text(),encoding="utf-8")
     A=pd.read_csv(s_csv,index_col=0).to_numpy(float)
 
     # Read the spectral-clustering and candidate-selection configuration.
@@ -185,10 +185,10 @@ def run_meso_workflow(cfg=None, **kwargs):
     family_csv=out/"spectral_state_labels.csv"; family.to_csv(family_csv,index=False)
 
     # Generate affinity-network visualizations of the spectral solution.
-    graph=plot_affinity_graphs(A=A,state_ids=state_ids,labels=labels,out_dir=out/"Affinity_Graphs",seed=int(getattr(cfg,"MESO_SEED",42)),edge_quantile=float(getattr(cfg,"AFFINITY_GRAPH_EDGE_QUANTILE",0.90)),max_edges=int(getattr(cfg,"AFFINITY_GRAPH_MAX_EDGES",5000)))
+    graph=plot_affinity_graphs(A=A,state_ids=state_ids,labels=labels,out_dir=out/"Similarity_Graphs",seed=int(getattr(cfg,"MESO_SEED",42)),edge_quantile=float(getattr(cfg,"AFFINITY_GRAPH_EDGE_QUANTILE",0.90)),max_edges=int(getattr(cfg,"AFFINITY_GRAPH_MAX_EDGES",5000)))
 
     # Generate canonical family timelines, rasters, and output tables.
-    materialized=materialize_family_outputs(out_dir=str(out/"Materialized"),state_vectors=state_vectors,state_ids=state_ids,family_label_csv=str(family_csv),data_folder=str(getattr(cfg,"DATA_FOLDER","")),do_plots=bool(getattr(cfg,"DO_GRAPH",True)))
+    materialized=materialize_family_outputs(out_dir=str(out/"Primary_Output"),state_vectors=state_vectors,state_ids=state_ids,family_label_csv=str(family_csv),data_folder=str(getattr(cfg,"DATA_FOLDER","")),do_plots=bool(getattr(cfg,"DO_GRAPH",True)))
 
     # Assemble complete diagnostic metadata for the selected Meso solution.
     diagnostics={"selection_mode":"joint_eigengap_modularity","threshold_mode":"spectral_joint_eigengap_modularity_no_cleanup_no_subtypes","score_mode":"original_exponential_S_score_affinity_matrix","selected_k":selected_k,"n_spectral_labels":int(len(set(labels.tolist()))),"k_selection":k_diag,"spectral_eigen_solver":solver,"temporal_cleanup":{"cleanup_mode":"disabled","reason":"family_labels_are_assigned_only_by_spectral_clustering","n_changed_nodes":0},"subtype_discovery":"disabled","score_diagnostics":score_diag,"n_micro_states":len(state_ids),"n_family_labels":int(family["Component_Label"].nunique()),"pairs_score_csv":str(scored_csv),"s_score_matrix_csv":str(s_csv),"affinity_matrix_csv":str(affinity_csv),"candidate_scores_csv":str(candidate_csv),"family_label_csv":str(family_csv),"affinity_graph_outputs":graph,"materialized_outputs":materialized}

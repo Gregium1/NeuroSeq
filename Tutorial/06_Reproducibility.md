@@ -2,31 +2,39 @@
 
 ## Before running
 
-- [ ] Use a supported Python installation and create a clean `.venv`.
-- [ ] Run `python -m pip install -r requirements.txt` and `python -m pip check`.
-- [ ] Verify that `Tutorial/Example_Data/` contains 20 `SU_*.csv` files and that the selected interval is 0–60 seconds.
-- [ ] Use an empty output parent directory for each run.
-- [ ] Record the repository revision and dependency versions (`python -m pip freeze > installed_versions.txt`).
+- [ ] Create and activate a clean Python virtual environment; install `requirements.txt` and run `python -m pip check`.
+- [ ] Confirm `Tutorial/Example_Data/` contains **30** `SU_*.csv` files, not 20.
+- [ ] Select the spike-train folder as **Recording folder** and a separate, writable **Output folder**.
+- [ ] For the example, use start `0`, requested duration `60` s, `T=0.5` s, gamma minimum `1.07`, maximum `1.15`, and step `0.001`.
+- [ ] Save your GUI settings to JSON if you want to repeat them later. Record the Git revision and environment (`python -m pip freeze > installed_versions.txt`).
+- [ ] Remember that the duration may be capped at the **last observed spike**, which is not guaranteed to be the acquisition end time.
 
 ## After running
 
-- [ ] Confirm that `NeuroSeq/run_summary.json` and `NeuroSeq/runtime.csv` exist.
-- [ ] Confirm `run_summary.json` reports `n_neurons: 20`, `T: 0.5`, `start_time: 0.0`, `total_duration: 60.0`.
-- [ ] Inspect `Micro/micro_ctx.json` for the representative gamma and Micro outputs.
-- [ ] Locate consensus critical points and inspect the temporal segmentation.
-- [ ] Inspect Meso `state_vectors.csv` and final state labels. Do not assume that five generator regimes must yield five inferred Metastable States.
-- [ ] Save the complete output directory with the software revision used.
+- [ ] Confirm the GUI shows **Completed** and reports runtime, Proto-state count and Metastable State count.
+- [ ] Confirm `<output parent>/NeuroSeq/run_summary.json` and `runtime.csv` exist.
+- [ ] Confirm the neuron count is **30**, not 20, and inspect the recorded **effective** analysis duration rather than assuming it is exactly 60.0 seconds.
+- [ ] Open `Micro/micro_ctx.json`, review the representative gamma, and inspect the consensus critical-point CSVs through **Open Output Folder**.
+- [ ] Inspect `proto_state_vectors.csv`, `proto_state_louvain_nmi.csv`, `spectral_similarity_matrix.csv`, and final labels where generated.
+- [ ] Inspect `state_sequence.png`, `raster_with_states.png`, and the numbered `Raster_60s/` figures.
+- [ ] Save the complete output directory with the software revision. Do not treat the screenshots' **109 Proto-states / 10 Metastable States** as the expected result of the bundled example.
 
-## GUI versus standalone comparison
+## GUI versus standalone execution
 
-To compare execution paths, use identical input data, `T`, duration, gamma sweep, seeds, and environment. Set `data_folder` and `output_root` in `run_neuroseq.py` and run `python run_neuroseq.py`. Compare **numerical outputs** (critical-point times, representative gamma, Proto-state vectors, similarity matrices, final labels). Runtime may vary with thread settings and hardware even when the mathematics agrees.
+The GUI and standalone launcher should invoke the same scientific pipeline. To compare them, use the same data, effective interval, `T`, gamma range and step, seeds, dependency versions, and other configuration. If your project includes `run_neuroseq.py`, set its `data_folder` and `output_root` before invoking `python run_neuroseq.py`. Compare numerical outputs (consensus boundaries, gamma, Proto-state vectors, similarity matrices and final labels), not wall-clock runtime.
 
-## Common problems
+## Common questions
 
-- `ModuleNotFoundError`: install the requirements inside the activated environment, not into a different Python interpreter.
-- `No SU_*.csv files`: select the actual folder containing the spike timestamp CSVs.
-- Unexpected nested output path: the orchestrator appends `/NeuroSeq` to the chosen output parent.
-- Slow gamma sweep: 81 gamma values and three Louvain seeds are evaluated by default; wait for the completion message and inspect the console.
-- `tight_layout()` warning: a Matplotlib layout warning may appear; inspect the exported figure, but it is not evidence that state discovery failed.
+**Why are critical-point files missing from the GUI list?** They are not deleted; the GUI intentionally displays only primary results. Use **Open Output Folder** to inspect Micro diagnostics.
+
+**What does Refresh files do?** It rereads the current output folder and updates the visible file list. It does **not** clear or delete existing files.
+
+**Why did the effective duration change?** A request past the last observed spike is shortened. Without acquisition metadata, the last spike is only a proxy for the recording endpoint.
+
+**Why do I see multiple numbered raster figures?** Long intervals are split into consecutive 60-second *views* for readability, not into separate scientific runs.
+
+**What if the GUI seems stuck?** Allow time for the gamma sweep and output generation; check whether summary files are written. If an exception appears in the launching terminal, save the traceback for troubleshooting. A completed numerical output file alone does not prove the worker returned successfully.
+
+**What if a dependency is missing?** Activate the intended virtual environment, install `requirements.txt`, and check that `python` refers to that environment.
 
 [Return to tutorial home](README.md).
