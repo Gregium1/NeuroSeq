@@ -1,3 +1,10 @@
+
+## Authors and Contributors
+
+- **[Greg Owanga](https://github.com/Gregium1)** — Method development, algorithm design, implementation, and software development.
+- **[Richard Bertram](https://github.com/rbertram)** — Scientific supervision, mathematical guidance, and research collaboration.
+- **[Roberto Vincis](https://github.com/VincisLab)** — Experimental neuroscience, data collection, and research collaboration.
+
 # NeuroSeq
 
 **A multi-scale functional-network toolbox for Proto-state segmentation and Metastable State discovery from neuronal spike trains**
