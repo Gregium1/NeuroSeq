@@ -52,7 +52,7 @@ If the PowerShell execution policy blocks activation, use `.venv\Scripts\python.
 ### macOS / Linux
 
 ```bash
-python3 -m venv .venv
+python3.12 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
