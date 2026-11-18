@@ -3,7 +3,7 @@
 
 - **[Greg Owanga](https://github.com/Gregium1)** — Method development, algorithm design, implementation, and software development.
 - **[Richard Bertram](https://github.com/rbertram)** — Scientific supervision, mathematical guidance, and research collaborator.
-- **[Roberto Vincis](https://github.com/VincisLab)** — Experimental neuroscience, data collection, and research collaborator
+- **[Roberto Vincis](https://github.com/VincisLab)** — Scientific supervision, experimental neuroscience, data collection, and research collaborator
 
 # NeuroSeq
 
