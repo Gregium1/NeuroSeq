@@ -13,6 +13,6 @@ The bundled [`Example_Data/`](Example_Data/) contains **30 synthetic spike train
 
 ## About the screenshots
 
-The screenshots in [`Images/`](Images/) illustrate a **separate completed analysis** (109 Proto-states and 10 Metastable States). They are not guaranteed outputs for the bundled example. Screenshots reflect the updated GUI, including the filtered output list, compact state-sequence preview, and light/dark themes. Micro critical-point diagnostics are still generated and can be opened with **Open Output Folder**, even though they are not listed in the simplified GUI output browser.
+The screenshots in [`Images/`](Images/) illustrate a **completed analysis**. Screenshots reflect the updated GUI, including the filtered output list, compact state-sequence preview, and light/dark themes. Micro critical-point diagnostics are still generated and can be opened with **Open Output Folder**, even though they are not listed in the simplified GUI output browser.
 
 [Return to the main README](../README.md).
