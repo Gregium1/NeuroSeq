@@ -11,7 +11,7 @@
 
 NeuroSeq identifies changes in neuronal population organization across time and groups related temporal patterns into **Metastable States**. It uses a two-stage **Micro–Meso** workflow and provides both a Python desktop GUI and a standalone Python launcher. The input is spike timing data; stimulus annotations, licking events, behavioral labels, and a user-specified number of states are **not required**.
 
-**Scope:** NeuroSeq analyzes the full recorded neuronal population through its Micro–Meso pipeline. It does not require stimulus annotations or a predefined number of Metastable States.
+**Scope:** NeuroSeq analyzes the full recorded neuronal population through its Micro–Meso pipeline. It does not require stimulus annotations or a predefined number of Metastable States. 
 
 ## Contents
 
